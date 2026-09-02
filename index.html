@@ -85,27 +85,33 @@
   .info-tbl td { padding: 1px 3px; border-bottom: 1px solid rgba(128,128,128,0.06); }
   .info-tbl td:first-child { color: var(--muted); width: 32%; }
   .info-tbl td:last-child { font-weight: 500; }
-  .mb { display: none; position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.4); z-index: 1000; justify-content: center; align-items: center; }
+  .mb { display: none; position: fixed; inset:0; z-index: 1000; justify-content: center; align-items: center;
+    background: #03a9f4;
+    animation: mbpopOpen .18s ease-out;
+  }
   .mb.visible { display: flex; }
-  .modal { background: var(--card); border: 1px solid var(--border); border-radius: 5px; padding: 10px 12px; width: 90%; max-width: 380px; }
-  .modal h3 { font-size: 0.8rem; margin-bottom: 8px; }
-  .modal .m-close { float: right; border: none; background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; padding: 0 2px; }
-  .modal .m-close:hover { color: var(--fg); }
-  .fg { margin-bottom: 5px; }
-  .fg label { display: block; font-size: 0.6rem; color: var(--muted); margin-bottom: 1px; font-weight: 500; }
-  .fg input { width: 100%; border: 1px solid var(--border); border-radius: 3px; padding: 3px 5px; font-size: 0.7rem; background: var(--bg); color: var(--fg); font-family: inherit; }
-  .fg input:focus { outline: 2px solid var(--accent); border-color: transparent; }
-  .fr { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-  .ma { display: flex; gap: 4px; justify-content: flex-end; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--border); }
-  .btn { padding: 3px 8px; border-radius: 3px; border: none; cursor: pointer; font-size: 0.65rem; font-weight: 500; }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { opacity: 0.85; }
-  .btn-secondary { background: var(--card); color: var(--fg); border: 1px solid var(--border); }
-  .btn-secondary:hover { background: rgba(128,128,128,0.07); }
-  .btn-danger { background: #ef4444; color: #fff; }
-  .btn-danger:hover { opacity: 0.85; }
-  .cb { display: none; position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.4); z-index: 2000; justify-content: center; align-items: center; }
-  .cb.visible { display: flex; }
+  @keyframes mbpopOpen { from { opacity:0; } to { opacity:1; } }
+  @keyframes mbpopIn { from { opacity:0; transform:translateY(6px) scale(0.98); } to { opacity:1; transform:translateY(0) scale(1); } }
+  .modal { background: #fff; border: 1px solid rgba(255,255,255,0.25); border-radius: 8px; padding: 12px 14px; width: 92%; max-width: 420px; box-shadow: 0 10px 32px rgba(0,0,0,0.35), 0 3px 10px rgba(0,0,0,0.25); animation: mbpopIn .18s ease-out; }
+  .modal h3 { font-size: 0.85rem; margin-bottom: 9px; font-weight: 600; color: #111; }
+  .modal .m-close { float: right; border: none; background: rgba(0,0,0,0.05); color: #333; cursor: pointer; font-size: 0.85rem; padding: 2px 6px; border-radius: 3px; line-height: 1; }
+  .modal .m-close:hover { background: rgba(0,0,0,0.1); color: #000; }
+  .fg { margin-bottom: 6px; padding: 7px 9px; background: #f5f8ff; border-radius: 4px; border: 1px solid rgba(3,169,244,0.18); }
+  .fg label { display: block; font-size: 0.62rem; color: #1565c0; margin-bottom: 2px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; }
+  .fg input { width: 100%; border: 1px solid #90caf9; border-radius: 4px; padding: 5px 7px; font-size: 0.74rem; background: #fff; color: #222; font-family: inherit; box-sizing: border-box; }
+  .fg input:focus { outline: 2px solid #03a9f4; border-color: #03a9f4; background: #fff; }
+  .fr { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .ma { display: flex; gap: 6px; justify-content: flex-end; margin-top: 10px; padding-top: 7px; border-top: 1px solid rgba(3,169,244,0.2); }
+  .btn { padding: 5px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 0.68rem; font-weight: 600; transition: opacity 0.1s, transform 0.05s; }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: #03a9f4; color: #fff; }
+  .btn-primary:hover { background: #0288d1; }
+  .btn-secondary { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+  .btn-secondary:hover { background: #bbdefb; }
+  .btn-danger { background: #ef5350; color: #fff; }
+  .btn-danger:hover { background: #e53935; }
+  .mb { display: none; position: fixed; top:0; left:0; right:0; bottom:0; background: #dce7f5; z-index: 1000; justify-content: center; align-items: center; }
+  .mb.visible { display: flex; }
   .cbox { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 8px 12px; width: 90%; max-width: 260px; text-align: center; }
   .cbox h4 { font-size: 0.78rem; margin-bottom: 1px; }
   .cbox p { font-size: 0.68rem; color: var(--muted); margin-bottom: 6px; }
@@ -132,7 +138,7 @@
 <div class="today-section">
   <div class="today-header">
     <span class="today-badge"><font style="color:#FF0000">📌 วันนี้ 2 กันยายน 2026</span></font>
-    <span class="today-count" id="todayCount">กำลังโหลด...</span>
+    <span class="today-count" id="todayCount"></span>
   </div>
   <div id="todayList">
     
@@ -360,16 +366,7 @@
   </div>
 </div>
 
-<div class="cb" id="confirmBackdrop">
-  <div class="cbox">
-    <h4>⚠ ยืนยันการลบ</h4>
-    <p id="confirmMsg">คุณแน่ใจไหมว่าจะลบรายการนี้?</p>
-    <div class="ca">
-      <button class="btn btn-secondary" onclick="closeConfirm()">ยกเลิก</button>
-      <button class="btn btn-danger" id="confirmDelBtn">🗑 ลบ</button>
-    </div>
-  </div>
-</div>
+
 
 <div class="footer">
   จุดแข็ง: เรียนรู้ไว<br>
@@ -386,7 +383,25 @@ let currentEditId=null, currentCustomer=null;
 
 let records = JSON.parse(localStorage.getItem('tl_cal_v5') || JSON.stringify(RECORDS));
 
+function countToday(){
+  const t = new Date();
+  const ts = makeDate(t.getFullYear(), t.getMonth(), t.getDate());
+  let c = 0;
+  for (const r of records){
+    if (!r || (!r.qNo && !r.customer)) continue;
+    if (r.arrival === ts || r.ship === ts || r.wrapShip === ts || r.wrapArr === ts ||
+        r.ndkShip === ts || r.ndkArr === ts || (r.memo && r.date === ts)) c++;
+  }
+  return c;
+}
+
+function initTodayCount(){
+  document.getElementById('todayCount').textContent = countToday() + ' รายการในวันนี้';
+}
+
 function saveAll(){localStorage.setItem('tl_cal_v5', JSON.stringify(records));}
+
+initTodayCount();
 
 function pad(n){return String(n).padStart(2,'0');}
 function makeDate(y,m,d){return y+'-'+pad(m+1)+'-'+pad(d);}
@@ -499,7 +514,7 @@ function buildTodayList(){
     html='<div class="empty-today">วันนี้ไม่มีกำหนดการ</div>';
   }
   document.getElementById('todayList').innerHTML=html;
-  document.getElementById('todayCount').textContent=todays.length+' รายการในวันนี้';
+  initTodayCount();
 }
 
 function showDay(ts){
