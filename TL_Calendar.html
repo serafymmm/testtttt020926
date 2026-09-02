@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TL Calendar — Siam Yuken</title>
+<style>
+  :root { --fg: var(--foreground); --muted: var(--muted-foreground); --accent: var(--accent); --border: var(--border); --card: var(--card); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--fg); background: var(--bg); padding: 14px; min-height: 100vh; font-size: 13px; }
+  h1 { font-size: 1.1rem; font-weight: 600; margin-bottom: 1px; }
+  .sub { color: var(--muted); font-size: 0.7rem; margin-bottom: 8px; }
+  .nav-bar { display: flex; align-items: center; gap: 4px; margin-bottom: 7px; flex-wrap: wrap; }
+  .nav-btn { padding: 3px 7px; border-radius: 4px; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; font-size: 0.7rem; transition: all 0.1s; }
+  .nav-btn:hover { background: rgba(128,128,128,0.07); }
+  .nav-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .nav-btn.primary:hover { opacity: 0.88; }
+  .month-label { font-size: 0.8rem; font-weight: 600; min-width: 120px; text-align: center; padding: 3px 7px; border-radius: 4px; background: var(--card); border: 1px solid var(--border); }
+  .spacer { flex: 1; }
+  .today-section { margin-bottom: 8px; }
+  .today-header { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+  .today-badge { background: var(--accent); color: #fff; padding: 2px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
+  .today-count { font-size: 0.65rem; color: var(--muted); }
+  .evt-bar { display: flex; align-items: center; gap: 5px; padding: 3px 5px; border-radius: 4px; cursor: pointer; transition: all 0.08s; position: relative; font-size: 0.76rem; }
+  .evt-bar:hover { filter: brightness(0.95); }
+  .evt-bar-icon { font-size: 0.78rem; width: 14px; text-align: center; flex-shrink: 0; }
+  .evt-bar-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .evt-bar-qno { font-family: 'Courier New', monospace; font-weight: 600; font-size: 0.7rem; }
+  .evt-bar-cust { font-size: 0.62rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .evt-bar-right { text-align: right; flex-shrink: 0; line-height: 1.3; }
+  .evt-bar-label { font-size: 0.65rem; font-weight: 600; }
+  .evt-bar-date { font-size: 0.58rem; color: var(--muted); }
+  .evt-bar-del { position: absolute; right: 1px; top: 1px; width: 15px; height: 15px; border: none; border-radius: 50%; background: rgba(239,68,68,0.75); color: #fff; font-size: 0.5rem; cursor: pointer; line-height: 1; padding: 0; opacity: 0; transition: opacity 0.12s; }
+  .evt-bar:hover .evt-bar-del { opacity: 1; }
+  .evt-bar-del:hover { background: #ef4444; }
+  .empty-today { color: var(--muted); text-align: center; padding: 6px; font-size: 0.72rem; font-style: italic; }
+  .bar-ship { background: rgba(16,185,129,0.08); border-left: 2.5px solid #10b981; }
+  .bar-ndk { background: rgba(239,68,68,0.07); border-left: 2.5px solid #f472b6; }
+  .bar-wrap { background: rgba(245,158,11,0.09); border-left: 2.5px solid #f59e0b; }
+  .bar-arrival { background: rgba(59,130,246,0.08); border-left: 2.5px solid #3b82f6; }
+  .bar-memo { background: rgba(107,114,128,0.09); border-left: 2.5px solid #6b7280; }
+  .bar-other { background: rgba(128,128,128,0.05); border-left: 2.5px solid #9ca3af; }
+  .cal-sec { margin-bottom: 6px; }
+  .cal-sec-title { font-size: 0.65rem; color: var(--muted); margin-bottom: 3px; padding-bottom: 2px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 3px; }
+  .cal-sec-title::before { content: '📅'; font-size: 0.65rem; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .cal-hdr { text-align: center; font-size: 0.58rem; color: var(--muted); font-weight: 600; padding: 1px 0; border-bottom: 1px solid var(--border); }
+  .day-card { border: 1px solid var(--border); border-radius: 3px; padding: 2px 3px; cursor: pointer; transition: all 0.1s; min-height: 42px; background: var(--card); }
+  .day-card:hover { filter: brightness(0.96); transform: translateY(-1px); }
+  .day-card.today { border: 2px solid var(--accent); background: rgba(128,128,128,0.03); }
+  .day-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1px; }
+  .day-date { font-size: 0.58rem; font-weight: 600; }
+  .day-card.today .day-date { color: var(--accent); }
+  .day-count { font-size: 0.5rem; color: var(--muted); background: rgba(128,128,128,0.08); padding: 0 2px; border-radius: 4px; }
+  .day-evts { display: flex; flex-direction: column; gap: 1px; }
+  .evt-row-small { display: flex; align-items: center; gap: 2px; padding: 1px 2px; border-radius: 2px; font-size: 0.52rem; cursor: pointer; }
+  .evt-row-small:hover { filter: brightness(0.88); }
+  .evt-arrival { background: rgba(59,130,246,0.1); }
+  .evt-ship { background: rgba(16,185,129,0.1); }
+  .evt-wrap { background: rgba(245,158,11,0.1); }
+  .evt-ndk { background: rgba(239,68,68,0.1); }
+  .evt-memo { background: rgba(107,114,128,0.1); }
+  .evt-icon-xs { font-size: 0.48rem; width: 6px; text-align: center; flex-shrink: 0; }
+  .evt-qno-xs { font-family: 'Courier New', monospace; font-weight: 600; font-size: 0.48rem; }
+  .evt-cust-xs { font-size: 0.45rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .evt-right-xs { text-align: right; flex-shrink: 0; line-height: 1.2; }
+  .evt-label-xs { font-size: 0.45rem; opacity: 0.7; }
+  .evt-date-xs { font-size: 0.43rem; color: var(--muted); }
+  .evt-more-xs { font-size: 0.45rem; color: var(--muted); text-align: center; padding: 0 1px; font-style: italic; }
+  .evt-empty-xs { font-size: 0.45rem; color: var(--muted); text-align: center; padding: 2px; font-style: italic; }
+  .bg-ship { background: rgba(16,185,129,0.025); }
+  .bg-arrival { background: rgba(59,130,246,0.025); }
+  .bg-ndk { background: rgba(239,68,68,0.025); }
+  .bg-wrap { background: rgba(245,158,11,0.025); }
+  .bg-memo { background: rgba(107,114,128,0.025); }
+  .bg-mixed { background: rgba(16,185,129,0.02); }
+  .bg-empty { background: rgba(128,128,128,0.02); }
+  .dp { margin-top: 5px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--card); display: none; max-width: 420px; }
+  .dp.visible { display: block; }
+  .dp-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
+  .dp-title { font-size: 0.78rem; font-weight: 600; }
+  .dp-close { border: none; background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; padding: 0 2px; }
+  .dp-close:hover { color: var(--fg); }
+  .info-tbl { width: 100%; border-collapse: collapse; font-size: 0.62rem; }
+  .info-tbl td { padding: 1px 3px; border-bottom: 1px solid rgba(128,128,128,0.06); }
+  .info-tbl td:first-child { color: var(--muted); width: 32%; }
+  .info-tbl td:last-child { font-weight: 500; }
+  .mb { display: none; position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.4); z-index: 1000; justify-content: center; align-items: center; }
+  .mb.visible { display: flex; }
+  .modal { background: var(--card); border: 1px solid var(--border); border-radius: 5px; padding: 10px 12px; width: 90%; max-width: 380px; }
+  .modal h3 { font-size: 0.8rem; margin-bottom: 8px; }
+  .modal .m-close { float: right; border: none; background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem; padding: 0 2px; }
+  .modal .m-close:hover { color: var(--fg); }
+  .fg { margin-bottom: 5px; }
+  .fg label { display: block; font-size: 0.6rem; color: var(--muted); margin-bottom: 1px; font-weight: 500; }
+  .fg input { width: 100%; border: 1px solid var(--border); border-radius: 3px; padding: 3px 5px; font-size: 0.7rem; background: var(--bg); color: var(--fg); font-family: inherit; }
+  .fg input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .fr { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  .ma { display: flex; gap: 4px; justify-content: flex-end; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--border); }
+  .btn { padding: 3px 8px; border-radius: 3px; border: none; cursor: pointer; font-size: 0.65rem; font-weight: 500; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-secondary { background: var(--card); color: var(--fg); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: rgba(128,128,128,0.07); }
+  .btn-danger { background: #ef4444; color: #fff; }
+  .btn-danger:hover { opacity: 0.85; }
+  .cb { display: none; position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.4); z-index: 2000; justify-content: center; align-items: center; }
+  .cb.visible { display: flex; }
+  .cbox { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 8px 12px; width: 90%; max-width: 260px; text-align: center; }
+  .cbox h4 { font-size: 0.78rem; margin-bottom: 1px; }
+  .cbox p { font-size: 0.68rem; color: var(--muted); margin-bottom: 6px; }
+  .cbox .ca { display: flex; gap: 4px; justify-content: center; }
+  .footer { margin-top: 8px; padding-top: 4px; border-top: 1px solid var(--border); text-align: center; font-size: 0.55rem; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<h1>📅 TL Calendar — Siam Yuken</h1>
+<div class="sub">入荷出荷確認表 · คลิกแถบเพื่อแก้ไข · ปุ่ม ✕ เพื่อลบ</div>
+
+<div class="nav-bar">
+  <button class="nav-btn" id="prevMonth">◀</button>
+  <span class="month-label" id="monthLabel">กันยายน 2026</span>
+  <button class="nav-btn" id="nextMonth">▶</button>
+  <button class="nav-btn primary" id="todayBtn">📌 วันนี้</button>
+  <span class="spacer"></span>
+  <button class="nav-btn primary" id="addBtn" style="background:var(--accent);color:#fff;">➕ เพิ่ม</button>
+  <button class="nav-btn" id="exportBtn">💾 CSV</button>
+  <button class="nav-btn" id="resetBtn" style="color:#ef4444;">↺ รีเซ็ต</button>
+</div>
+
+<div class="today-section">
+  <div class="today-header">
+    <span class="today-badge">📌 วันนี้ 2 กันยายน 2026</span>
+    <span class="today-count" id="todayCount">กำลังโหลด...</span>
+  </div>
+  <div id="todayList">
+    
+    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T151','TOYOTA BOSHOKU FILTRA')">
+      <span class="evt-bar-icon">📦</span>
+      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T151</span><span class="evt-bar-cust">TOYOTA BOSHOKU FILTRA</span></div>
+      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
+      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T151','TOYOTA BOSHOKU FILTRA')" title="ลบ">✕</button>
+    </div>
+    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T215','SIXTY-SIX')">
+      <span class="evt-bar-icon">📦</span>
+      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T215</span><span class="evt-bar-cust">SIXTY-SIX</span></div>
+      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
+      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T215','SIXTY-SIX')" title="ลบ">✕</button>
+    </div>
+    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T273','NICHIDAI ASIA')">
+      <span class="evt-bar-icon">📦</span>
+      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T273</span><span class="evt-bar-cust">NICHIDAI ASIA</span></div>
+      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
+      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T273','NICHIDAI ASIA')" title="ลบ">✕</button>
+    </div>
+    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T278','ENSHU AUTO')">
+      <span class="evt-bar-icon">📦</span>
+      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T278</span><span class="evt-bar-cust">ENSHU AUTO</span></div>
+      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
+      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T278','ENSHU AUTO')" title="ลบ">✕</button>
+    </div>
+    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T327','PSM')">
+      <span class="evt-bar-icon">📦</span>
+      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T327</span><span class="evt-bar-cust">PSM</span></div>
+      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
+      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T327','PSM')" title="ลบ">✕</button>
+    </div>
+    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T336','ASIA YAMASHITA')">
+      <span class="evt-bar-icon">📦</span>
+      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T336</span><span class="evt-bar-cust">ASIA YAMASHITA</span></div>
+      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
+      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T336','ASIA YAMASHITA')" title="ลบ">✕</button>
+    </div>
+    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T337','ASIA YAMASHITA')">
+      <span class="evt-bar-icon">📦</span>
+      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T337</span><span class="evt-bar-cust">ASIA YAMASHITA</span></div>
+      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
+      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T337','ASIA YAMASHITA')" title="ลบ">✕</button>
+    </div>
+    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T347','ASIA YAMASHITA')">
+      <span class="evt-bar-icon">📦</span>
+      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T347</span><span class="evt-bar-cust">ASIA YAMASHITA</span></div>
+      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
+      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T347','ASIA YAMASHITA')" title="ลบ">✕</button>
+    </div>
+    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T348','ASIA YAMASHITA')">
+      <span class="evt-bar-icon">📦</span>
+      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T348</span><span class="evt-bar-cust">ASIA YAMASHITA</span></div>
+      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
+      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T348','ASIA YAMASHITA')" title="ลบ">✕</button>
+    </div>
+    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T349','ASIA YAMASHITA')">
+      <span class="evt-bar-icon">📦</span>
+      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T349</span><span class="evt-bar-cust">ASIA YAMASHITA</span></div>
+      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
+      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T349','ASIA YAMASHITA')" title="ลบ">✕</button>
+    </div>
+    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T350','ASIA YAMASHITA')">
+      <span class="evt-bar-icon">📦</span>
+      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T350</span><span class="evt-bar-cust">ASIA YAMASHITA</span></div>
+      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
+      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T350','ASIA YAMASHITA')" title="ลบ">✕</button>
+    </div>
+    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T351','SEVEN SEAS')">
+      <span class="evt-bar-icon">📦</span>
+      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T351</span><span class="evt-bar-cust">SEVEN SEAS</span></div>
+      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
+      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T351','SEVEN SEAS')" title="ลบ">✕</button>
+    </div>
+    <div class="evt-bar ndk bar-ndk" onclick="event.stopPropagation();openEdit('Q2608T249','TAKEBE')">
+      <span class="evt-bar-icon">📦</span>
+      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T249</span><span class="evt-bar-cust">TAKEBE</span></div>
+      <div class="evt-bar-right"><span class="evt-bar-label">NDK出荷</span><span class="evt-bar-date">2026-09-02</span></div>
+      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T249','TAKEBE')" title="ลบ">✕</button>
+    </div>
+    <div class="evt-bar ndk bar-ndk" onclick="event.stopPropagation();openEdit('Q2608T312','ENSHU AUTO')">
+      <span class="evt-bar-icon">📥</span>
+      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T312</span><span class="evt-bar-cust">ENSHU AUTO</span></div>
+      <div class="evt-bar-right"><span class="evt-bar-label">NDK入荷</span><span class="evt-bar-date">2026-09-02</span></div>
+      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T312','ENSHU AUTO')" title="ลบ">✕</button>
+    </div>
+    <div class="evt-bar ndk bar-ndk" onclick="event.stopPropagation();openEdit('Q2608T321','FUJILLOY')">
+      <span class="evt-bar-icon">📥</span>
+      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T321</span><span class="evt-bar-cust">FUJILLOY</span></div>
+      <div class="evt-bar-right"><span class="evt-bar-label">NDK入荷</span><span class="evt-bar-date">2026-09-02</span></div>
+      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T321','FUJILLOY')" title="ลบ">✕</button>
+    </div>
+    <div class="evt-bar ndk bar-ndk" onclick="event.stopPropagation();openEdit('Q2608T322','FUJILLOY')">
+      <span class="evt-bar-icon">📥</span>
+      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T322</span><span class="evt-bar-cust">FUJILLOY</span></div>
+      <div class="evt-bar-right"><span class="evt-bar-label">NDK入荷</span><span class="evt-bar-date">2026-09-02</span></div>
+      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T322','FUJILLOY')" title="ลบ">✕</button>
+    </div>
+    <div class="evt-bar ndk bar-ndk" onclick="event.stopPropagation();openEdit('Q2608T342','SIXTY-SIX')">
+      <span class="evt-bar-icon">📥</span>
+      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T342</span><span class="evt-bar-cust">SIXTY-SIX</span></div>
+      <div class="evt-bar-right"><span class="evt-bar-label">NDK入荷</span><span class="evt-bar-date">2026-09-02</span></div>
+      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T342','SIXTY-SIX')" title="ลบ">✕</button>
+    </div>
+    <div class="evt-bar ndk bar-ndk" onclick="event.stopPropagation();openEdit('Q2608T343','TAIYO MANUFAC')">
+      <span class="evt-bar-icon">📥</span>
+      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T343</span><span class="evt-bar-cust">TAIYO MANUFAC</span></div>
+      <div class="evt-bar-right"><span class="evt-bar-label">NDK入荷</span><span class="evt-bar-date">2026-09-02</span></div>
+      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T343','TAIYO MANUFAC')" title="ลบ">✕</button>
+    </div>
+    <div class="evt-bar wrap bar-wrap" onclick="event.stopPropagation();openEdit('Q2608T354','SATO PRESS')">
+      <span class="evt-bar-icon">📦</span>
+      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T354</span><span class="evt-bar-cust">SATO PRESS</span></div>
+      <div class="evt-bar-right"><span class="evt-bar-label">ﾗｯﾌﾟ出荷</span><span class="evt-bar-date">2026-09-02</span></div>
+      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T354','SATO PRESS')" title="ลบ">✕</button>
+    </div>
+    <div class="evt-bar wrap bar-wrap" onclick="event.stopPropagation();openEdit('Q2608T354','SATO PRESS')">
+      <span class="evt-bar-icon">📥</span>
+      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T354</span><span class="evt-bar-cust">SATO PRESS</span></div>
+      <div class="evt-bar-right"><span class="evt-bar-label">ﾗｯﾌﾟ入荷</span><span class="evt-bar-date">2026-09-02</span></div>
+      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T354','SATO PRESS')" title="ลบ">✕</button>
+    </div>
+  </div>
+</div>
+
+<div class="cal-sec">
+  <div class="cal-sec-title">14 วันข้างหน้า — คลิกวันเพื่อดูรายละเอียด</div>
+  <div class="cal-grid" id="calHeader">
+    <div class="cal-hdr">จ.</div><div class="cal-hdr">อ.</div><div class="cal-hdr">พ.</div>
+    <div class="cal-hdr">พฤ.</div><div class="cal-hdr">ศ.</div><div class="cal-hdr">ส.</div><div class="cal-hdr">อา.</div>
+  </div>
+  <div class="cal-grid" id="dayGrid">
+    
+    <div class="day-card bg-empty" onclick="showDay('2026-09-31')">
+      <div class="day-head"><span class="day-date">31 ก.ย.</span><span class="day-count">—</span></div>
+      <div class="day-evts"><div class="evt-empty-xs">—</div></div>
+    </div>
+    <div class="day-card bg-empty" onclick="showDay('2026-10-01')">
+      <div class="day-head"><span class="day-date">1 ต.ค.</span><span class="day-count">—</span></div>
+      <div class="day-evts"><div class="evt-empty-xs">—</div></div>
+    </div>
+    <div class="day-card bg-empty today" onclick="showDay('2026-10-02')">
+      <div class="day-head"><span class="day-date">🔴 2 ต.ค.</span><span class="day-count">—</span></div>
+      <div class="day-evts"><div class="evt-empty-xs">—</div></div>
+    </div>
+    <div class="day-card bg-empty" onclick="showDay('2026-10-03')">
+      <div class="day-head"><span class="day-date">3 ต.ค.</span><span class="day-count">—</span></div>
+      <div class="day-evts"><div class="evt-empty-xs">—</div></div>
+    </div>
+    <div class="day-card bg-empty" onclick="showDay('2026-10-04')">
+      <div class="day-head"><span class="day-date">4 ต.ค.</span><span class="day-count">—</span></div>
+      <div class="day-evts"><div class="evt-empty-xs">—</div></div>
+    </div>
+    <div class="day-card bg-empty" onclick="showDay('2026-10-05')">
+      <div class="day-head"><span class="day-date">5 ต.ค.</span><span class="day-count">—</span></div>
+      <div class="day-evts"><div class="evt-empty-xs">—</div></div>
+    </div>
+    <div class="day-card bg-empty" onclick="showDay('2026-10-06')">
+      <div class="day-head"><span class="day-date">6 ต.ค.</span><span class="day-count">—</span></div>
+      <div class="day-evts"><div class="evt-empty-xs">—</div></div>
+    </div>
+    <div class="day-card bg-empty" onclick="showDay('2026-10-07')">
+      <div class="day-head"><span class="day-date">7 ต.ค.</span><span class="day-count">—</span></div>
+      <div class="day-evts"><div class="evt-empty-xs">—</div></div>
+    </div>
+    <div class="day-card bg-empty" onclick="showDay('2026-10-08')">
+      <div class="day-head"><span class="day-date">8 ต.ค.</span><span class="day-count">—</span></div>
+      <div class="day-evts"><div class="evt-empty-xs">—</div></div>
+    </div>
+    <div class="day-card bg-empty" onclick="showDay('2026-10-09')">
+      <div class="day-head"><span class="day-date">9 ต.ค.</span><span class="day-count">—</span></div>
+      <div class="day-evts"><div class="evt-empty-xs">—</div></div>
+    </div>
+    <div class="day-card bg-empty" onclick="showDay('2026-10-10')">
+      <div class="day-head"><span class="day-date">10 ต.ค.</span><span class="day-count">—</span></div>
+      <div class="day-evts"><div class="evt-empty-xs">—</div></div>
+    </div>
+    <div class="day-card bg-empty" onclick="showDay('2026-10-11')">
+      <div class="day-head"><span class="day-date">11 ต.ค.</span><span class="day-count">—</span></div>
+      <div class="day-evts"><div class="evt-empty-xs">—</div></div>
+    </div>
+    <div class="day-card bg-empty" onclick="showDay('2026-10-12')">
+      <div class="day-head"><span class="day-date">12 ต.ค.</span><span class="day-count">—</span></div>
+      <div class="day-evts"><div class="evt-empty-xs">—</div></div>
+    </div>
+    <div class="day-card bg-empty" onclick="showDay('2026-10-13')">
+      <div class="day-head"><span class="day-date">13 ต.ค.</span><span class="day-count">—</span></div>
+      <div class="day-evts"><div class="evt-empty-xs">—</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="dp" id="detailPanel"></div>
+
+<div class="mb" id="modalBackdrop">
+  <div class="modal">
+    <button class="m-close" onclick="closeModal()">✕</button>
+    <h3 id="modalTitle">➕ เพิ่มรายการใหม่</h3>
+    <input type="hidden" id="editId">
+    <div class="fg"><label>Quotation No. *</label><input type="text" id="f_qNo" placeholder="Q2609T001"></div>
+    <div class="fg"><label>お客様 (Customer) *</label><input type="text" id="f_customer" placeholder="บริษัท ลูกค้า"></div>
+    <div class="fr">
+      <div class="fg"><label>入荷日</label><input type="date" id="f_arrival"></div>
+      <div class="fg"><label>出荷日</label><input type="date" id="f_ship"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>ﾗｯﾌﾟ出荷</label><input type="date" id="f_wrapShip"></div>
+      <div class="fg"><label>ﾗｯﾌﾟ入荷</label><input type="date" id="f_wrapArr"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>NDK出荷</label><input type="date" id="f_ndkShip"></div>
+      <div class="fg"><label>NDK入荷</label><input type="date" id="f_ndkArr"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>PCS</label><input type="number" id="f_pcs" step="0.01" min="0"></div>
+      <div class="fg"><label>KG</label><input type="number" id="f_kg" step="0.001" min="0"></div>
+    </div>
+    <div class="fg"><label>備考 (Memo)</label><input type="text" id="f_memo" placeholder="หมายเหตุ"></div>
+    <div class="ma">
+      <button class="btn btn-danger" id="deleteBtn" style="display:none;" onclick="deleteCur()">🗑 ลบ</button>
+      <button class="btn btn-secondary" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveRec()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<div class="cb" id="confirmBackdrop">
+  <div class="cbox">
+    <h4>⚠ ยืนยันการลบ</h4>
+    <p id="confirmMsg">คุณแน่ใจไหมว่าจะลบรายการนี้?</p>
+    <div class="ca">
+      <button class="btn btn-secondary" onclick="closeConfirm()">ยกเลิก</button>
+      <button class="btn btn-danger" id="confirmDelBtn">🗑 ลบ</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  TL Calendar — Siam Yuken · 入荷出荷確認表<br>
+  ข้อมูลจาก TL_Schedule.xlsx · กดรีเซ็ตเพื่อกลับเป็นข้อมูลเดิม
+</div>
+
+<script>
+const RECORDS = [{"date": "2026-07-21", "qNo": "Q2607T268", "customer": "TOYOTA BOSHOKU", "pcs": 5.0, "kg": 9.0, "arrival": "2026-07-20", "ship": "2026-07-24", "wrapShip": "2026-07-21", "wrapArr": "2026-07-21", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-07-21", "qNo": "Q2607T269", "customer": "TOYOTA BOSHOKU", "pcs": 2.0, "kg": 0.8, "arrival": "2026-07-20", "ship": "2026-07-24", "wrapShip": "2026-07-21", "wrapArr": "2026-07-21", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-07-22", "qNo": "Q2607T288", "customer": "TOYOTA BOSHOKU", "pcs": 5.0, "kg": 1.7, "arrival": "2026-07-22", "ship": "2026-07-24", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-07-22", "qNo": "Q2607T289", "customer": "TOYOTA BOSHOKU", "pcs": 4.0, "kg": 2.4, "arrival": "2026-07-22", "ship": "2026-07-24", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-07-22", "qNo": "Q2607T290", "customer": "TOYOTA BOSHOKU", "pcs": 1.0, "kg": 0.6, "arrival": "2026-07-22", "ship": "2026-07-31", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2607T313", "customer": "TOYOTA BOSHOKU", "pcs": 8.0, "kg": 8.2, "arrival": "2026-07-24", "ship": "2026-07-31", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2607T314", "customer": "TOYOTA BOSHOKU", "pcs": 7.0, "kg": 3.3, "arrival": "2026-07-24", "ship": "2026-07-31", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2607T315", "customer": "TOYOTA BOSHOKU", "pcs": 1.0, "kg": 1.8, "arrival": "2026-07-24", "ship": "2026-08-05", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2607T316", "customer": "TOYOTA BOSHOKU", "pcs": 6.0, "kg": 0.6, "arrival": "2026-07-24", "ship": "2026-07-31", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2607T317", "customer": "TOYOTA BOSHOKU", "pcs": 4.0, "kg": 0.4, "arrival": "2026-07-24", "ship": "2026-07-31", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2607T318", "customer": "TOYOTA BOSHOKU", "pcs": 7.0, "kg": 5.0, "arrival": "2026-07-24", "ship": "2026-07-31", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-07-29", "qNo": "Q2607T332", "customer": "TOYOTA BOSHOKU", "pcs": 3.0, "kg": 5.4, "arrival": "2026-07-27", "ship": "2026-08-03", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-03", "qNo": "Q2607T347", "customer": "ENSHU AUTO", "pcs": 2.0, "kg": 0.4, "arrival": "2026-07-30", "ship": "2026-08-05", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-03", "qNo": "Q2607T348", "customer": "ENSHU AUTO", "pcs": 6.0, "kg": 1.4999999999999998, "arrival": "2026-07-30", "ship": "2026-08-05", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-03", "qNo": "Q2607T349", "customer": "ENSHU AUTO", "pcs": 4.0, "kg": 1.1, "arrival": "2026-07-30", "ship": "2026-08-05", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-03", "qNo": "Q2607T357", "customer": "TOYOTA BOSHOKU", "pcs": 9.0, "kg": 2.2, "arrival": "2026-07-31", "ship": "2026-08-05", "wrapShip": "2026-07-31", "wrapArr": "2026-07-31", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-05", "qNo": "Q2608T01", "customer": "THAI SOHBI", "pcs": 7.0, "kg": 2.14, "arrival": "2026-08-03", "ship": "2026-08-07", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-05", "qNo": "Q2608T33", "customer": "SUNCHIRIN", "pcs": 4.0, "kg": 4.14, "arrival": "2026-08-04", "ship": "2026-08-13", "wrapShip": "2026-08-05", "wrapArr": "2026-08-05", "ndkShip": "2026-08-06", "ndkArr": "2026-08-11", "memo": null}, {"date": "2026-08-05", "qNo": "Q2608T34", "customer": "SUNCHIRIN", "pcs": 2.0, "kg": 0.34, "arrival": "2026-08-04", "ship": "2026-08-13", "wrapShip": "2026-08-05", "wrapArr": "2026-08-05", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-06", "qNo": "Q2608T35", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-06", "qNo": "Q2608T36", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-06", "qNo": "Q2608T37", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-06", "qNo": "Q2608T43", "customer": "TOYOTA BOSHOKU", "pcs": 8.0, "kg": 1.7000000000000002, "arrival": "2026-08-05", "ship": "2026-08-11", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-06", "qNo": "Q2608T44", "customer": "TOYOTA BOSHOKU", "pcs": 2.0, "kg": 2.4, "arrival": "2026-08-05", "ship": "2026-08-11", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-06", "qNo": "Q2608T45", "customer": "TOYOTA BOSHOKU", "pcs": 6.0, "kg": 4.800000000000001, "arrival": "2026-08-05", "ship": "2026-08-11", "wrapShip": "2026-08-06", "wrapArr": "2026-08-06", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-06", "qNo": "Q2608T46", "customer": "TOYOTA BOSHOKU", "pcs": 2.0, "kg": 1.2, "arrival": "2026-08-05", "ship": "2026-08-11", "wrapShip": "2026-08-06", "wrapArr": "2026-08-06", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-10", "qNo": "Q2608T70", "customer": "TOYOTA BOSHOKU", "pcs": 6.0, "kg": 2.6, "arrival": "2026-08-07", "ship": "2026-08-13", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-10", "qNo": "Q2608T71", "customer": "TOYOTA BOSHOKU", "pcs": 1.0, "kg": 0.6, "arrival": "2026-08-07", "ship": "2026-08-13", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-10", "qNo": "Q2608T72", "customer": "TOYOTA BOSHOKU", "pcs": 2.0, "kg": 3.0, "arrival": "2026-08-07", "ship": "2026-08-13", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-10", "qNo": "Q2608T85", "customer": "SUNCHIRIN", "pcs": 2.0, "kg": 1.2, "arrival": "2026-08-10", "ship": "2026-08-19", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-14", "qNo": "Q2608T120", "customer": "ENSHU AUTO", "pcs": 6.0, "kg": 4.0, "arrival": "2026-08-13", "ship": "2026-08-17", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-14", "qNo": "Q2608T121", "customer": "ENSHU AUTO", "pcs": 1.0, "kg": 0.3, "arrival": "2026-08-13", "ship": "2026-08-18", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-14", "qNo": "Q2608T123", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-14", "qNo": "Q2608T124", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-14", "qNo": "Q2608T126", "customer": "TAIYO MANUFAC", "pcs": 6.0, "kg": 0.8, "arrival": "2026-08-13", "ship": "2026-08-20", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-14", "qNo": "Q2608T127", "customer": "TAIYO MANUFAC", "pcs": 4.0, "kg": 0.04, "arrival": "2026-08-13", "ship": "2026-08-17", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-14", "qNo": "Q2608T128", "customer": "ENSHU AUTO", "pcs": 2.0, "kg": 1.5, "arrival": "2026-08-13", "ship": "2026-08-18", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-14", "qNo": "Q2608T129", "customer": "THAI NISSIN MOLS", "pcs": 1.0, "kg": 0.01, "arrival": "2026-08-14", "ship": "2026-08-19", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-17", "qNo": "Q2608T136", "customer": "TOYOTA BOSHOKU", "pcs": 8.0, "kg": 0.8, "arrival": "2026-08-14", "ship": "2026-08-19", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-17", "qNo": "Q2608T137", "customer": "TOYOTA BOSHOKU", "pcs": 7.0, "kg": 5.629999999999999, "arrival": "2026-08-14", "ship": "2026-08-19", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-17", "qNo": "Q2608T138", "customer": "TOYOTA BOSHOKU", "pcs": 4.0, "kg": 5.6, "arrival": "2026-08-14", "ship": "2026-08-19", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-17", "qNo": "Q2608T139", "customer": "TOYOTA BOSHOKU", "pcs": 2.0, "kg": 3.5, "arrival": "2026-08-14", "ship": "2026-08-19", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-17", "qNo": "Q2608T140", "customer": "TOYOTA BOSHOKU", "pcs": 4.0, "kg": 0.4, "arrival": "2026-08-14", "ship": "2026-08-19", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-17", "qNo": "Q2608T141", "customer": "TOYOTA BOSHOKU", "pcs": 5.0, "kg": 0.5, "arrival": "2026-08-14", "ship": "2026-08-19", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-17", "qNo": "Q2608T142", "customer": "TOYOTA BOSHOKU", "pcs": 11.0, "kg": 1.58, "arrival": "2026-08-14", "ship": "2026-08-19", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-17", "qNo": "Q2608T143", "customer": "TOYOTA BOSHOKU", "pcs": 7.0, "kg": 5.2, "arrival": "2026-08-14", "ship": "2026-08-19", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-17", "qNo": "Q2608T145", "customer": "TAIYO MANUFAC", "pcs": 5.0, "kg": 0.5, "arrival": "2026-08-14", "ship": "2026-05-19", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-17", "qNo": "Q2608T146", "customer": "TAIYO MANUFAC", "pcs": 9.0, "kg": 1.38, "arrival": "2026-08-14", "ship": "2026-08-19", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-17", "qNo": "Q2608T147", "customer": "SUNCHIRIN", "pcs": 4.0, "kg": 7.6, "arrival": "2026-08-14", "ship": "2026-08-19", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-18", "qNo": "Q2608T150", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T151", "customer": "TOYOTA BOSHOKU FILTRA", "pcs": 10.0, "kg": 8.6, "arrival": "2026-08-25", "ship": "2026-09-02", "wrapShip": "2026-08-26", "wrapArr": "2026-08-27", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-17", "qNo": "Q2608T152", "customer": "TOYOTA BOSHOKU", "pcs": 2.0, "kg": 1.2, "arrival": "2026-08-14", "ship": "2026-08-19", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-18", "qNo": "Q2608T161", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-18", "qNo": "Q2608T167", "customer": "TOYOTA BOSHOKU", "pcs": 3.0, "kg": 0.45, "arrival": "2026-08-17", "ship": "2026-08-20", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-18", "qNo": "Q2608T168", "customer": "TOYOTA BOSHOKU", "pcs": 18.0, "kg": 1.44, "arrival": "2026-08-17", "ship": "2026-08-21", "wrapShip": "2026-08-18", "wrapArr": "2026-08-18", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-18", "qNo": "Q2608T169", "customer": "TOYOTA BOSHOKU", "pcs": 6.0, "kg": 9.83, "arrival": "2026-08-17", "ship": "2026-08-20", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-18", "qNo": "Q2608T170", "customer": "TOYOTA BOSHOKU", "pcs": 4.0, "kg": 4.46, "arrival": "2026-08-17", "ship": "2026-08-20", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-18", "qNo": "Q2608T171", "customer": "TOYOTA BOSHOKU", "pcs": 1.0, "kg": 1.74, "arrival": "2026-08-17", "ship": "2026-08-20", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-18", "qNo": "Q2608T172", "customer": "TOYOTA BOSHOKU", "pcs": 8.0, "kg": 3.16, "arrival": "2026-08-17", "ship": "2026-08-21", "wrapShip": "2026-08-18", "wrapArr": "2026-08-18", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-18", "qNo": "Q2608T184", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-18", "qNo": "Q2608T185", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-18", "qNo": "Q2608T198", "customer": "ENSHU AUTO", "pcs": 7.0, "kg": 2.9, "arrival": "2026-08-18", "ship": "2026-08-21", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-18", "qNo": "Q2608T199", "customer": "ENSHU AUTO", "pcs": 8.0, "kg": 4.7, "arrival": "2026-08-18", "ship": "2026-08-26", "wrapShip": "2026-08-19", "wrapArr": "2026-08-19", "ndkShip": "2026-08-20", "ndkArr": "2026-08-24", "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T202", "customer": "THAI NISSIN MOLS", "pcs": 12.0, "kg": 0.72, "arrival": "2026-08-27", "ship": "2026-09-03", "wrapShip": "2026-08-28", "wrapArr": "2026-08-28", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-20", "qNo": "Q2608T205", "customer": "TOYOTA BOSHOKU", "pcs": 4.0, "kg": 0.568, "arrival": "2026-08-18", "ship": "2026-08-24", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-20", "qNo": "Q2608T206", "customer": "TOYOTA BOSHOKU", "pcs": 6.0, "kg": 7.936, "arrival": "2026-08-18", "ship": "2026-08-24", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-20", "qNo": "Q2608T207", "customer": "TOYOTA BOSHOKU", "pcs": 11.0, "kg": 0.476, "arrival": "2026-08-19", "ship": "2026-08-26", "wrapShip": "2026-08-20", "wrapArr": "2026-08-20", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-20", "qNo": "Q2608T214", "customer": "TAIYO MANUFAC", "pcs": 7.0, "kg": 0.134, "arrival": "2026-08-19", "ship": "2026-08-25", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-20", "qNo": "Q2608T215", "customer": "SIXTY-SIX", "pcs": 1.0, "kg": 0.068, "arrival": "2026-08-19", "ship": "2026-09-02", "wrapShip": "2026-08-21", "wrapArr": "2026-08-21", "ndkShip": "2026-08-25", "ndkArr": "2026-08-31", "memo": null}, {"date": "2026-08-20", "qNo": "Q2608T220", "customer": "SATO PRESS", "pcs": 3.0, "kg": 27.599999999999998, "arrival": "2026-08-19", "ship": "2026-08-28", "wrapShip": "2026-08-25", "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-20", "qNo": "Q2608T221", "customer": "SATO PRESS", "pcs": 4.0, "kg": 14.5, "arrival": "2026-08-19", "ship": "2026-08-28", "wrapShip": "2026-08-25", "wrapArr": "2026-08-25", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-20", "qNo": "Q2608T222", "customer": "SATO PRESS", "pcs": 3.0, "kg": 8.0, "arrival": "2026-08-19", "ship": "2026-08-28", "wrapShip": "2026-08-25", "wrapArr": "2026-08-25", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-20", "qNo": "Q2608T223", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-21", "qNo": "Q2608T224", "customer": "DENSO INNOVATIVE", "pcs": 1.0, "kg": 0.1, "arrival": "2026-08-20", "ship": "2026-08-24", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-21", "qNo": "Q2608T227", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-21", "qNo": "Q2608T234", "customer": "SIXTY-SIX", "pcs": 1.0, "kg": 0.65, "arrival": "2026-08-20", "ship": "2026-08-27", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-24", "qNo": "Q2608T249", "customer": "TAKEBE", "pcs": 1.0, "kg": 1.0, "arrival": "2026-08-21", "ship": "2026-09-07", "wrapShip": "2026-09-01", "wrapArr": "2026-09-01", "ndkShip": "2026-09-02", "ndkArr": "2026-09-04", "memo": null}, {"date": "2026-08-24", "qNo": "Q2608T255", "customer": "SIXTY-SIX", "pcs": 1.0, "kg": 0.67, "arrival": "2026-08-21", "ship": "2026-08-27", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-24", "qNo": "Q2608T256", "customer": "TOYOTA BOSHOKU", "pcs": 5.0, "kg": 8.06, "arrival": "2026-08-21", "ship": "2026-08-26", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-24", "qNo": "Q2608T257", "customer": "TOYOTA BOSHOKU", "pcs": 5.0, "kg": 6.699999999999999, "arrival": "2026-08-21", "ship": "2026-08-26", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-24", "qNo": "Q2608T258", "customer": "TOYOTA BOSHOKU", "pcs": 2.0, "kg": 4.58, "arrival": "2026-08-21", "ship": "2026-08-26", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-24", "qNo": "Q2608T259", "customer": "TOYOTA BOSHOKU", "pcs": 6.0, "kg": 0.9779999999999999, "arrival": "2026-08-21", "ship": "2026-08-28", "wrapShip": "2026-08-24", "wrapArr": "2026-08-24", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-24", "qNo": "Q2608T260", "customer": "TOYOTA BOSHOKU", "pcs": 6.0, "kg": 0.31599999999999995, "arrival": "2026-08-21", "ship": "2026-08-28", "wrapShip": "2026-08-24", "wrapArr": "2026-08-24", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-25", "qNo": "Q2608T261", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-25", "qNo": "Q2608T262", "customer": "central motor", "pcs": 4.0, "kg": 20.52, "arrival": "2026-08-24", "ship": "2026-09-07", "wrapShip": "2026-08-25", "wrapArr": "2026-08-25", "ndkShip": "2026-08-27", "ndkArr": "2026-09-01", "memo": null}, {"date": "2026-08-25", "qNo": "Q2608T263", "customer": "central motor", "pcs": 4.0, "kg": 19.2, "arrival": "2026-08-24", "ship": "2026-09-14", "wrapShip": "2026-08-25", "wrapArr": "2026-08-25", "ndkShip": "2026-08-27", "ndkArr": "2026-09-04", "memo": null}, {"date": "2026-08-25", "qNo": "Q2608T264", "customer": "central motor", "pcs": 6.0, "kg": 0.8999999999999999, "arrival": "2026-08-24", "ship": "2026-08-28", "wrapShip": "2026-08-25", "wrapArr": "2026-08-25", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-25", "qNo": "Q2608T265", "customer": "central motor", "pcs": 1.0, "kg": 1.58, "arrival": "2026-08-24", "ship": "2026-08-28", "wrapShip": "2026-08-25", "wrapArr": "2026-08-25", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-25", "qNo": "Q2608T266", "customer": "central motor", "pcs": 12.0, "kg": 1.2, "arrival": "2026-08-24", "ship": "2026-08-28", "wrapShip": "2026-08-25", "wrapArr": "2026-08-26", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-25", "qNo": "Q2608T267", "customer": "central motor", "pcs": 2.0, "kg": 1.704, "arrival": "2026-08-24", "ship": "2026-08-28", "wrapShip": "2026-08-25", "wrapArr": "2026-08-26", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-25", "qNo": "Q2608T271", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-25", "qNo": "Q2608T272", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-25", "qNo": "Q2608T273", "customer": "NICHIDAI ASIA", "pcs": 1.0, "kg": 2.93, "arrival": "2026-08-24", "ship": "2026-09-02", "wrapShip": null, "wrapArr": null, "ndkShip": "2026-08-26", "ndkArr": "2026-06-28", "memo": null}, {"date": "2026-08-25", "qNo": "Q2608T278", "customer": "ENSHU AUTO", "pcs": 7.0, "kg": 2.9, "arrival": "2026-08-24", "ship": "2026-09-02", "wrapShip": "2026-08-25", "wrapArr": "2026-08-25", "ndkShip": "2026-08-26", "ndkArr": "2026-08-28", "memo": null}, {"date": "2026-08-25", "qNo": "Q2608T280", "customer": "DENSO INNOVATIVE", "pcs": 2.0, "kg": 0.2, "arrival": "2026-08-24", "ship": "2026-08-27", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-25", "qNo": "Q2608T281", "customer": "DENSO INNOVATIVE", "pcs": 1.0, "kg": 12.0, "arrival": "2026-08-24", "ship": "2026-08-27", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T291", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T302", "customer": "THAI SANKO", "pcs": 8.0, "kg": 0.45, "arrival": "2026-08-25", "ship": "2026-08-31", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T303", "customer": "THAI SANKO", "pcs": 1.0, "kg": 0.038, "arrival": "2026-08-25", "ship": "2026-08-31", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T304", "customer": "NITTO SEIKO", "pcs": 330.0, "kg": 13.11, "arrival": "2026-08-25", "ship": "2026-09-04", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T305", "customer": "SIXTY-SIX", "pcs": 30.0, "kg": 0.7999999999999999, "arrival": "2026-08-25", "ship": "2026-09-08", "wrapShip": "2026-08-26", "wrapArr": "2026-08-27", "ndkShip": "2026-09-01", "ndkArr": "2026-09-07", "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T310", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T311", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T312", "customer": "ENSHU AUTO", "pcs": 3.0, "kg": 1.5, "arrival": "2026-08-26", "ship": "2026-08-07", "wrapShip": null, "wrapArr": null, "ndkShip": "2026-08-28", "ndkArr": "2026-09-02", "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T314", "customer": "ASIA YAMASHITA", "pcs": 1.0, "kg": 0.58, "arrival": "2026-08-26", "ship": "2026-08-31", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T318", "customer": "DENSO INNOVATIVE", "pcs": 1.0, "kg": 2.6, "arrival": "2026-08-26", "ship": "2026-09-01", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T319", "customer": "DENSO INNOVATIVE", "pcs": 24.0, "kg": 4.800000000000001, "arrival": "2026-08-26", "ship": "2026-09-01", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T320", "customer": "DENSO INNOVATIVE", "pcs": 2.0, "kg": 23.2, "arrival": "2026-08-26", "ship": "2026-09-03", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T321", "customer": "FUJILLOY", "pcs": 3.0, "kg": 0.62, "arrival": "2026-08-26", "ship": "2026-09-07", "wrapShip": null, "wrapArr": null, "ndkShip": "2026-08-28", "ndkArr": "2026-09-02", "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T322", "customer": "FUJILLOY", "pcs": 1.0, "kg": 0.23, "arrival": "2026-08-26", "ship": "2026-09-07", "wrapShip": null, "wrapArr": null, "ndkShip": "2026-08-28", "ndkArr": "2026-09-02", "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T323", "customer": "TOYOTA BOSHOKU", "pcs": 2.0, "kg": 0.52, "arrival": "2026-08-26", "ship": "2026-09-01", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T324", "customer": "TOYOTA BOSHOKU", "pcs": 1.0, "kg": 0.58, "arrival": "2026-08-26", "ship": "2026-09-01", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T325", "customer": "TOYOTA BOSHOKU", "pcs": 10.0, "kg": 2.01, "arrival": "2026-08-26", "ship": "2026-09-01", "wrapShip": "2026-08-27", "wrapArr": "2026-08-27", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T326", "customer": "TOYOTA BOSHOKU", "pcs": 4.0, "kg": 7.32, "arrival": "2026-08-26", "ship": "2026-09-03", "wrapShip": "2026-08-28", "wrapArr": "2026-08-28", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T327", "customer": "PSM", "pcs": 1.0, "kg": 4.5, "arrival": "2026-08-26", "ship": "2026-09-02", "wrapShip": "2026-08-31", "wrapArr": "2026-08-31", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T328", "customer": "THAI MARUJUN", "pcs": 1.0, "kg": 7.9, "arrival": "2026-08-26", "ship": "2026-09-09", "wrapShip": "2026-08-31", "wrapArr": "2026-08-31", "ndkShip": "2026-09-01", "ndkArr": "2026-09-04", "memo": null}, {"date": "2026-08-27", "qNo": "Q2608T329", "customer": "THAI MARUJUN", "pcs": 1.0, "kg": 7.9, "arrival": "2026-08-26", "ship": "2026-09-09", "wrapShip": "2026-08-27", "wrapArr": "2026-08-27", "ndkShip": "2026-09-01", "ndkArr": "2026-09-04", "memo": null}, {"date": "2026-08-27", "qNo": "Q2608T330", "customer": "THAI MARUJUN", "pcs": 4.0, "kg": 0.2, "arrival": "2026-08-26", "ship": "2026-09-09", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T331", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-26", "qNo": "Q2608T332", "customer": "TOYOTA BOSHOKU", "pcs": 8.0, "kg": 2.3, "arrival": "2026-08-26", "ship": "2026-09-01", "wrapShip": "2026-08-27", "wrapArr": "2026-08-27", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T334", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T335", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T336", "customer": "ASIA YAMASHITA", "pcs": 2.0, "kg": 1.2, "arrival": "2026-08-27", "ship": "2026-09-02", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T337", "customer": "ASIA YAMASHITA", "pcs": 1.0, "kg": 0.09, "arrival": "2026-08-27", "ship": "2026-09-02", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T339", "customer": "NICHIDAI ASIA", "pcs": 3.0, "kg": 33.72, "arrival": "2026-08-27", "ship": "2026-09-03", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T341", "customer": "SIXTY-SIX", "pcs": 1.0, "kg": 0.35, "arrival": "2026-08-27", "ship": "2026-09-03", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T342", "customer": "SIXTY-SIX", "pcs": 2.0, "kg": 0.072, "arrival": "2026-08-27", "ship": "2026-09-07", "wrapShip": null, "wrapArr": null, "ndkShip": "2026-08-28", "ndkArr": "2026-09-02", "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T343", "customer": "TAIYO MANUFAC", "pcs": 2.0, "kg": 0.256, "arrival": "2026-08-27", "ship": "2026-09-07", "wrapShip": null, "wrapArr": null, "ndkShip": "2026-08-28", "ndkArr": "2026-09-02", "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T344", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T345", "customer": "NICHIDAI ASIA", "pcs": 1.0, "kg": 0.33, "arrival": "2026-08-28", "ship": "2026-09-07", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T346", "customer": "TOYOTA BOSHOKU", "pcs": 6.0, "kg": 3.656, "arrival": "2026-08-28", "ship": "2026-09-03", "wrapShip": "2026-08-31", "wrapArr": "2026-08-31", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T347", "customer": "ASIA YAMASHITA", "pcs": 6.0, "kg": 1.95, "arrival": "2026-08-28", "ship": "2026-09-02", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T348", "customer": "ASIA YAMASHITA", "pcs": 2.0, "kg": 0.08, "arrival": "2026-08-28", "ship": "2026-09-02", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T349", "customer": "ASIA YAMASHITA", "pcs": 2.0, "kg": 0.068, "arrival": "2026-08-28", "ship": "2026-09-02", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T350", "customer": "ASIA YAMASHITA", "pcs": 5.0, "kg": 4.3, "arrival": "2026-08-28", "ship": "2026-09-02", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T351", "customer": "SEVEN SEAS", "pcs": 2.0, "kg": 0.41000000000000003, "arrival": "2026-08-28", "ship": "2026-09-02", "wrapShip": "2026-08-28", "wrapArr": "2026-08-28", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T352", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T353", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T354", "customer": "SATO PRESS", "pcs": 1.0, "kg": 1.9, "arrival": "2026-08-28", "ship": "2026-09-09", "wrapShip": "2026-09-02", "wrapArr": "2026-09-02", "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T355", "customer": "FUJILLOY", "pcs": 1.0, "kg": 0.26, "arrival": "2026-08-28", "ship": "2026-09-03", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T356", "customer": "FUJILLOY", "pcs": 10.0, "kg": 2.38, "arrival": "2026-08-28", "ship": "2026-09-03", "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T357", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T358", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T359", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T360", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T361", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T362", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T363", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T364", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T365", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T366", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T367", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T368", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T369", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": "2026-08-31", "qNo": "Q2608T370", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T01", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T02", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T03", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T04", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T05", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T06", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T07", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T08", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T09", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T10", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T11", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T12", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T13", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T14", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T15", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T16", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T17", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T18", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T19", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T20", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T21", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T22", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T23", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T24", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T25", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T26", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T27", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T28", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T29", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T30", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T31", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T32", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T33", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T34", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T35", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T36", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T37", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T38", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T39", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T40", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T41", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T42", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T43", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T44", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T45", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T46", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T47", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T48", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T49", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T50", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T51", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T52", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T53", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T54", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T55", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T56", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T57", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T58", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T59", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T60", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T61", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T62", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T63", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T64", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T65", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T66", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T67", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T68", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T69", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T70", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T71", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T72", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T73", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T74", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T75", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T76", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T77", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T78", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T79", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T80", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T81", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T82", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T83", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T84", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T85", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T86", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T87", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T88", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T89", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T90", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T91", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T92", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T93", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T94", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T95", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T96", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T97", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T98", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T99", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T100", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T101", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T102", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T103", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T104", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T105", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T106", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T107", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T108", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T109", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T110", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T111", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T112", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T113", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T114", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T115", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T116", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T117", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T118", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T119", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T120", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T121", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T122", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T123", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T124", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T125", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T126", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T127", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T128", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T129", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T130", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T131", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T132", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T133", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T134", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T135", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T136", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T137", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T138", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T139", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T140", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T141", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T142", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T143", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T144", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T145", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T146", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T147", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T148", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T149", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T150", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T151", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T152", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T153", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T154", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T155", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T156", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T157", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T158", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T159", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T160", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T161", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T162", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T163", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T164", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T165", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T166", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T167", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T168", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T169", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T170", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T171", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T172", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T173", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T174", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T175", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T176", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T177", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T178", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T179", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T180", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T181", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T182", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T183", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T184", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T185", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T186", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T187", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T188", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T189", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T190", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T191", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T192", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T193", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T194", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T195", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T196", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T197", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T198", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T199", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T200", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T201", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T202", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T203", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T204", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T205", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T206", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T207", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T208", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T209", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T210", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T211", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T212", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T213", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T214", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T215", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T216", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T217", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T218", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T219", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T220", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T221", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T222", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T223", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T224", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T225", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T226", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T227", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T228", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T229", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T230", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T231", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T232", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T233", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T234", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T235", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T236", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T237", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T238", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T239", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T240", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T241", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T242", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T243", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T244", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T245", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T246", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T247", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T248", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T249", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T250", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T251", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T252", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T253", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T254", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T255", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T256", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T257", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T258", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T259", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T260", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T261", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}, {"date": null, "qNo": "Q2609T262", "customer": null, "pcs": null, "kg": null, "arrival": null, "ship": null, "wrapShip": null, "wrapArr": null, "ndkShip": null, "ndkArr": null, "memo": null}];
+const MONTHS=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+const MONTHS_SHORT=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+
+let curYear=2026, curMonth=9;
+let currentEditId=null, currentCustomer=null;
+
+let records = JSON.parse(localStorage.getItem('tl_cal_v5') || JSON.stringify(RECORDS));
+
+function saveAll(){localStorage.setItem('tl_cal_v5', JSON.stringify(records));}
+
+function pad(n){return String(n).padStart(2,'0');}
+function makeDate(y,m,d){return y+'-'+pad(m+1)+'-'+pad(d);}
+
+function getAllEvents(y,m,d){
+  const ts=makeDate(y,m,d);
+  const ret=[];
+  for(const r of records){
+    if(!r||(!r.qNo&&!r.customer)) continue;
+    const has=r.arrival||r.ship||r.wrapShip||r.wrapArr||r.ndkShip||r.ndkArr||r.memo;
+    if(!has) continue;
+    if(r.arrival===ts) ret.push({t:'arrival',icon:'📥',label:'入荷',date:r.arrival,r});
+    if(r.ship===ts) ret.push({t:'ship',icon:'📦',label:'出荷',date:r.ship,r});
+    if(r.wrapShip===ts) ret.push({t:'wrap',icon:'📦',label:'ﾗｯﾌﾟ出荷',date:r.wrapShip,r});
+    if(r.wrapArr===ts) ret.push({t:'wrap',icon:'📥',label:'ﾗｯﾌﾟ入荷',date:r.wrapArr,r});
+    if(r.ndkShip===ts) ret.push({t:'ndk',icon:'📦',label:'NDK出荷',date:r.ndkShip,r});
+    if(r.ndkArr===ts) ret.push({t:'ndk',icon:'📥',label:'NDK入荷',date:r.ndkArr,r});
+    if(r.memo) ret.push({t:'memo',icon:'📝',label:'備考',date:r.date,r});
+  }
+  return ret;
+}
+
+function getDayBg(evts){
+  const has={};
+  for(const e of evts) has[e.t]=1;
+  if(has.ship&&has.arrival) return 'bg-mixed';
+  if(has.ship) return 'bg-ship';
+  if(has.ndk) return 'bg-ndk';
+  if(has.wrap) return 'bg-wrap';
+  if(has.arrival) return 'bg-arrival';
+  if(has.memo) return 'bg-memo';
+  return 'bg-empty';
+}
+
+function renderCalendar(){
+  document.getElementById('monthLabel').textContent=MONTHS[curMonth]+' '+curYear;
+  const grid=document.getElementById('dayGrid');
+  const t=new Date();
+  const tY=t.getFullYear(), tM=t.getMonth(), tD=t.getDate();
+  const daysInMon=new Date(curYear,curMonth+1,0).getDate();
+  const firstWd=new Date(curYear,curMonth,1).getDay();
+  const startOff=firstWd===0?6:firstWd-1;
+  let html='';
+  for(let i=0;i<14;i++){
+    let d=i-startOff+1, y=curYear, m=curMonth;
+    if(d<1){m--;if(m<0){m=11;y--;}d=new Date(y,m+1,0).getDate()+d;}
+    else if(d>daysInMon){m++;if(m>11){m=0;y++;}d=d-daysInMon;}
+    const ts2=makeDate(y,m,d);
+    const evts=getAllEvents(y,m,d);
+    const isT=(y===tY&&m===tM&&d===tD);
+    const dayLabel=d+' '+MONTHS_SHORT[m];
+    const bg=getDayBg(evts);
+    const priority={ship:0,ndk:1,wrap:2,arrival:3,memo:4};
+    const sorted=evts.sort((a,b)=>(priority[a.t]||5)-(priority[b.t]||5));
+    let evtsHtml='';
+    if(sorted.length>0){
+      for(const e of sorted.slice(0,3)){
+        const cls='evt-'+e.t;
+        evtsHtml+=`<div class="${cls}" onclick="event.stopPropagation();openEdit('${e.r.qNo}','${e.r.customer||''}')" title="${e.r.qNo}">
+          <span class="evt-icon-xs">${e.icon}</span>
+          <span class="evt-qno-xs">${e.r.qNo}</span>
+          <span class="evt-cust-xs">${e.r.customer||''}</span>
+          <span class="evt-right-xs"><span class="evt-label-xs">${e.label}</span> <span class="evt-date-xs">${e.date||'—'}</span></span>
+        </div>`;
+      }
+      if(sorted.length>3) evtsHtml+=`<div class="evt-more-xs">+${sorted.length-3}</div>`;
+    } else {
+      evtsHtml='<div class="evt-empty-xs">—</div>';
+    }
+    const tClass=isT?' today':'';
+    const countLabel=sorted.length>0?sorted.length+' รายการ':'—';
+    html+=`<div class="day-card ${bg}${tClass}" onclick="showDay('${ts2}')">
+      <div class="day-head"><span class="day-date">${dayLabel}</span><span class="day-count">${countLabel}</span></div>
+      <div class="day-evts">${evtsHtml}</div>
+    </div>`;
+  }
+  grid.innerHTML=html;
+}
+
+function buildTodayList(){
+  const t=new Date();
+  const ts=makeDate(t.getFullYear(),t.getMonth(),t.getDate());
+  const todays=[];
+  for(const r of records){
+    if(!r||(!r.qNo&&!r.customer)) continue;
+    if(r.arrival===ts) todays.push({t:'arrival',icon:'📥',label:'入荷',date:r.arrival,r});
+    if(r.ship===ts) todays.push({t:'ship',icon:'📦',label:'出荷',date:r.ship,r});
+    if(r.wrapShip===ts) todays.push({t:'wrap',icon:'📦',label:'ﾗｯﾌﾟ出荷',date:r.wrapShip,r});
+    if(r.wrapArr===ts) todays.push({t:'wrap',icon:'📥',label:'ﾗｯﾌﾟ入荷',date:r.wrapArr,r});
+    if(r.ndkShip===ts) todays.push({t:'ndk',icon:'📦',label:'NDK出荷',date:r.ndkShip,r});
+    if(r.ndkArr===ts) todays.push({t:'ndk',icon:'📥',label:'NDK入荷',date:r.ndkArr,r});
+    if(r.memo&&r.date===ts) todays.push({t:'memo',icon:'📝',label:'備考',date:r.date,r});
+  }
+  const priority={ship:0,ndk:1,wrap:2,arrival:3,memo:4};
+  todays.sort((a,b)=>(priority[a.t]||5)-(priority[b.t]||5));
+  let html='';
+  if(todays.length>0){
+    for(const e of todays){
+      const bc={
+        'ship':'bar-ship','ndk':'bar-ndk','wrap':'bar-wrap','arrival':'bar-arrival','memo':'bar-memo'
+      }[e.t]||'bar-other';
+      html+=`<div class="evt-bar ${e.t} ${bc}" onclick="event.stopPropagation();openEdit('${e.r.qNo}','${e.r.customer||''}')">
+        <span class="evt-bar-icon">${e.icon}</span>
+        <div class="evt-bar-main"><span class="evt-bar-qno">${e.r.qNo}</span><span class="evt-bar-cust">${e.r.customer||''}</span></div>
+        <div class="evt-bar-right"><span class="evt-bar-label">${e.label}</span><span class="evt-bar-date">${e.date}</span></div>
+        <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('${e.r.qNo}','${e.r.customer||''}')" title="ลบ">✕</button>
+      </div>`;
+    }
+  } else {
+    html='<div class="empty-today">วันนี้ไม่มีกำหนดการ</div>';
+  }
+  document.getElementById('todayList').innerHTML=html;
+  document.getElementById('todayCount').textContent=todays.length+' รายการในวันนี้';
+}
+
+function showDay(ts){
+  const panel=document.getElementById('detailPanel');
+  const evts=[];
+  for(const r of records){
+    if(!r||(!r.qNo&&!r.customer)) continue;
+    if(r.arrival===ts) evts.push({t:'arrival',icon:'📥',label:'入荷',r});
+    if(r.ship===ts) evts.push({t:'ship',icon:'📦',label:'出荷',r});
+    if(r.wrapShip===ts) evts.push({t:'wrap',icon:'📦',label:'ﾗｯﾌﾟ出荷',r});
+    if(r.wrapArr===ts) evts.push({t:'wrap',icon:'📥',label:'ﾗｯﾌﾟ入荷',r});
+    if(r.ndkShip===ts) evts.push({t:'ndk',icon:'📦',label:'NDK出荷',r});
+    if(r.ndkArr===ts) evts.push({t:'ndk',icon:'📥',label:'NDK入荷',r});
+    if(r.memo) evts.push({t:'memo',icon:'📝',label:'備考',r});
+  }
+  if(evts.length===0){
+    panel.innerHTML=`<div style="font-size:0.72rem;color:var(--muted);">📅 ${ts} — ไม่มีกำหนดการ</div>`;
+    panel.classList.add('visible');
+    return;
+  }
+  const byCust={};
+  for(const e of evts){
+    const cust=e.r.customer||'(ไม่ระบุ)';
+    if(!byCust[cust]) byCust[cust]=[];
+    byCust[cust].push(e);
+  }
+  let html=`<div class="dp-hdr"><span style="font-weight:600;">📅 ${ts}</span><button class="dp-close" onclick="document.getElementById('detailPanel').classList.remove('visible')">✕</button></div>`;
+  for(const cust in byCust){
+    const evts2=byCust[cust];
+    const priority2={ship:0,ndk:1,wrap:2,arrival:3,memo:4};
+    evts2.sort((a,b)=>(priority2[a.t]||5)-(priority2[b.t]||5));
+    html+=`<div style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(128,128,128,0.1);">
+      <div style="font-size:0.68rem;font-weight:600;color:var(--muted);">🏭 ${cust} (${evts2.length})</div>
+      <table class="info-tbl">`;
+    for(const e of evts2){
+      const r=e.r;
+      html+=`<tr><td>Quotation No.</td><td><strong>${r.qNo}</strong></td></tr>
+        <tr><td>お客様 (Customer)</td><td>${r.customer||'—'}</td></tr>
+        <tr><td>出荷日 (Ship Date)</td><td>${r.ship||'—'}</td></tr>
+        <tr><td>NDK出荷日</td><td>${r.ndkShip||'—'}</td></tr>
+        <tr><td>NDK入荷日</td><td>${r.ndkArr||'—'}</td></tr>
+        <tr><td>入荷日</td><td>${r.arrival||'—'}</td></tr>
+        <tr><td>ﾗｯﾌﾟ出荷日</td><td>${r.wrapShip||'—'}</td></tr>
+        <tr><td>ﾗｯﾌﾟ入荷日</td><td>${r.wrapArr||'—'}</td></tr>
+        <tr><td>PCS</td><td>${r.pcs!==null?r.pcs:'—'}</td></tr>
+        <tr><td>KG</td><td>${r.kg!==null?r.kg:'—'}</td></tr>`;
+      if(r.memo) html+=`<tr><td>備考</td><td>${r.memo}</td></tr>`;
+      html+=`<tr style="border-bottom:none;"><td colspan="2" style="height:1px;"></td></tr>`;
+    }
+    html+=`</table></div>`;
+  }
+  panel.innerHTML=html;
+  panel.classList.add('visible');
+}
+
+function openEdit(qNo,customer){
+  const r=records.find(rec=>rec.qNo===qNo&&rec.customer===customer);
+  if(!r) return;
+  currentEditId=qNo; currentCustomer=customer;
+  document.getElementById('modalTitle').textContent='✏️ แก้ไขรายการ';
+  document.getElementById('editId').value=qNo;
+  document.getElementById('f_qNo').value=r.qNo||'';
+  document.getElementById('f_customer').value=r.customer||'';
+  document.getElementById('f_arrival').value=r.arrival||'';
+  document.getElementById('f_ship').value=r.ship||'';
+  document.getElementById('f_wrapShip').value=r.wrapShip||'';
+  document.getElementById('f_wrapArr').value=r.wrapArr||'';
+  document.getElementById('f_ndkShip').value=r.ndkShip||'';
+  document.getElementById('f_ndkArr').value=r.ndkArr||'';
+  document.getElementById('f_pcs').value=r.pcs!==null?r.pcs:'';
+  document.getElementById('f_kg').value=r.kg!==null?r.kg:'';
+  document.getElementById('f_memo').value=r.memo||'';
+  document.getElementById('deleteBtn').style.display='block';
+  openModal();
+}
+function openAdd(){
+  currentEditId=null; currentCustomer=null;
+  document.getElementById('modalTitle').textContent='➕ เพิ่มรายการใหม่';
+  document.getElementById('editId').value='';
+  for(const id of ['f_qNo','f_customer','f_arrival','f_ship','f_wrapShip','f_wrapArr','f_ndkShip','f_ndkArr','f_pcs','f_kg','f_memo'])
+    document.getElementById(id).value='';
+  document.getElementById('deleteBtn').style.display='none';
+  openModal();
+}
+function openModal(){document.getElementById('modalBackdrop').classList.add('visible');}
+function closeModal(){document.getElementById('modalBackdrop').classList.remove('visible');currentEditId=null;currentCustomer=null;}
+function closeConfirm(){document.getElementById('confirmBackdrop').classList.remove('visible');}
+
+function saveRec(){
+  const qNo=document.getElementById('f_qNo').value.trim();
+  const customer=document.getElementById('f_customer').value.trim();
+  if(!qNo){alert('กรุณาระบุ Quotation No.');return;}
+  if(!customer){alert('กรุณาระบุ Customer');return;}
+  const rec={
+    date:'',
+    qNo:qNo,
+    customer:customer,
+    pcs:parseFloat(document.getElementById('f_pcs').value)||null,
+    kg:parseFloat(document.getElementById('f_kg').value)||null,
+    arrival:document.getElementById('f_arrival').value||null,
+    ship:document.getElementById('f_ship').value||null,
+    wrapShip:document.getElementById('f_wrapShip').value||null,
+    wrapArr:document.getElementById('f_wrapArr').value||null,
+    ndkShip:document.getElementById('f_ndkShip').value||null,
+    ndkArr:document.getElementById('f_ndkArr').value||null,
+    memo:document.getElementById('f_memo').value.trim()||null,
+  };
+  if(currentEditId){
+    const idx=records.findIndex(r=>r.qNo===currentEditId&&r.customer===currentCustomer);
+    if(idx>=0) records[idx]=rec; else records.push(rec);
+  } else records.push(rec);
+  saveAll();
+  closeModal();
+  buildTodayList();
+  renderCalendar();
+}
+
+function confirmDel(qNo,customer){
+  document.getElementById('confirmMsg').textContent=`ลบ ${qNo} (${customer})?`;
+  document.getElementById('confirmDelBtn').onclick=function(){
+    const idx=records.findIndex(r=>r.qNo===qNo&&r.customer===customer);
+    if(idx>=0) records.splice(idx,1);
+    saveAll();
+    closeConfirm();
+    buildTodayList();
+    renderCalendar();
+  };
+  document.getElementById('confirmBackdrop').classList.add('visible');
+}
+function deleteCur(){
+  if(!currentEditId) return;
+  confirmDel(currentEditId,currentCustomer);
+}
+
+function exportCSV(){
+  let csv='Quotation No.,Customer,入荷日,出荷日,ﾗｯﾌﾟ出荷日,ﾗｯﾌﾟ入荷日,NDK出荷日,NDK入荷日,PCS,KG,備考\n';
+  for(const r of records){
+    csv+='"'+r.qNo+'","'+(r.customer||'')+'","'+(r.arrival||'')+'","'+(r.ship||'')+'","'+(r.wrapShip||'')+'","'+(r.wrapArr||'')+'","'+(r.ndkShip||'')+'","'+(r.ndkArr||'')+'","'+(r.pcs!==null?r.pcs:'')+'","'+(r.kg!==null?r.kg:'')+'","'+(r.memo||'')+'"'+'\n';
+  }
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const link=document.createElement('a');
+  link.href=URL.createObjectURL(blob);
+  link.download='TL_Calendar_'+new Date().toISOString().split('T')[0]+'.csv';
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function resetAll(){
+  if(confirm('🚫 ล้างการแก้ไขทั้งหมด และกลับไปใช้ข้อมูลต้นฉบับจาก Excel?')){
+    localStorage.removeItem('tl_cal_v5');
+    records=JSON.parse(JSON.stringify(RECORDS));
+    buildTodayList();
+    renderCalendar();
+  }
+}
+
+document.getElementById('prevMonth').onclick=function(){curMonth--;if(curMonth<0){curMonth=11;curYear--;}renderCalendar();};
+document.getElementById('nextMonth').onclick=function(){curMonth++;if(curMonth>11){curMonth=0;curYear++;}renderCalendar();};
+document.getElementById('todayBtn').onclick=function(){const t=new Date();curYear=t.getFullYear();curMonth=t.getMonth();renderCalendar();};
+document.getElementById('addBtn').onclick=openAdd;
+document.getElementById('exportBtn').onclick=exportCSV;
+document.getElementById('resetBtn').onclick=resetAll;
+document.getElementById('modalBackdrop').onclick=function(e){if(e.target.id==='modalBackdrop')closeModal();};
+document.getElementById('confirmBackdrop').onclick=function(e){if(e.target.id==='confirmBackdrop')closeConfirm();};
+
+buildTodayList();
+renderCalendar();
+</script>
+</body>
+</html>

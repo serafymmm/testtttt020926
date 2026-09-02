@@ -1,0 +1,340 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>FUJILLOY — Production Sheet + Quotation</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 0 20px;
+    background: #f5f5f5;
+    color: #333;
+  }
+  h1 { color: #1a5276; border-bottom: 3px solid #2980b9; padding-bottom: 10px; }
+  h2 { color: #2471a3; margin-top: 30px; }
+  .section {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+  td, th {
+    padding: 10px;
+    border: 1px solid #ddd;
+    vertical-align: top;
+  }
+  th { background: #2980b9; color: white; text-align: left; font-size: 14px; }
+  td label { font-weight: bold; color: #555; font-size: 13px; width: 140px; display: block; }
+  td input, td select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 13px;
+  }
+  .btn-row { margin-top: 20px; text-align: right; }
+  button {
+    background: #2980b9;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-left: 10px;
+  }
+  button:hover { background: #1a5276; }
+  button.secondary { background: #95a5a6; }
+  button.secondary:hover { background: #7f8c8d; }
+  .hint { font-size: 12px; color: #888; margin-top: 4px; }
+  .success { background: #d4efdf; border: 1px solid #82e0aa; padding: 15px; border-radius: 6px; margin: 20px 0; }
+  .error { background: #fadbd8; border: 1px solid #e74c3c; padding: 15px; border-radius: 6px; margin: 20px 0; }
+  .part-row { background: #f8f9fa; }
+</style>
+</head>
+<body>
+
+<h1>🔰 FUJILLOY — กรอก Production Sheet + Quotation</h1>
+
+<form method="POST" action="/submit" id="mainForm">
+
+  <!-- ===== SECTION 1: HEADER ===== -->
+  <div class="section">
+    <h2>📋 ข้อมูลเบื้องต้น (Header)</h2>
+    <table>
+      <tr>
+        <td><label>Quotation No.</label><input name="QuotationNo" required placeholder="เช่น Q2603T211"></td>
+        <td><label>Production No.</label><input name="ProductionNo" required placeholder="เช่น Q2603T211"></td>
+      </tr>
+      <tr>
+        <td><label>Job No.</label><input name="JobNo" placeholder="(เว้นว่างได้)"></td>
+        <td><label>Requested Date</label><input type="date" name="RequestedDate"></td>
+      </tr>
+      <tr>
+        <td><label>Customer</label><input name="Customer" required placeholder="ชื่อลูกค้า"></td>
+        <td><label>Contact Name</label><input name="Contact" required placeholder="ชื่อผู้ติดต่อ"></td>
+      </tr>
+      <tr>
+        <td><label>TEL</label><input name="TEL" required placeholder="065-047-1616"></td>
+        <td><label>Email</label><input name="Email" type="email" placeholder="kanoknipa@siamyuken.co.th"></td>
+      </tr>
+      <tr>
+        <td colspan="2"><label>Address</label><input name="Address" style="height:60px;vertical-align:top;" placeholder="ที่อยู่ลูกค้า"></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ===== SECTION 2: PRODUCTION SHEET ===== -->
+  <div class="section">
+    <h2>📦 Production Sheet (現品票)</h2>
+    <table>
+      <tr>
+        <td><label>Product Code</label><input name="ProductCode" required placeholder="เช่น TL-N1----"></td>
+        <td><label>Coating Type Level</label>
+          <select name="CoatingLevel">
+            <option value="N1">N1 (TypeN)</option>
+            <option value="N2">N2 (TypeN)</option>
+            <option value="N4">N4 (TypeN)</option>
+            <option value="R1">R1 (TypeR)</option>
+            <option value="R2">R2 (TypeR)</option>
+            <option value="R4">R4 (TypeR)</option>
+            <option value="TL1">TL1 (TypeTL)</option>
+            <option value="TL2">TL2 (TypeTL)</option>
+            <option value="TL4">TL4 (TypeTL)</option>
+            <option value="AⅡ1">AⅡ1 (TypeAⅡ)</option>
+            <option value="AⅡ2">AⅡ2 (TypeAⅡ)</option>
+            <option value="AⅡ4">AⅡ4 (TypeAⅡ)</option>
+            <option value="YA">YA (DLC)</option>
+            <option value="K">K (TypeK)</option>
+            <option value="KTL">KTL (TypeKTL)</option>
+            <option value="KAⅡ">KAⅡ (TypeKAⅡ)</option>
+            <option value="KR">KR (TypeKR)</option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td><label>Processing Content</label>
+          <select name="Processing">
+            <option value="TypeN">TypeN</option>
+            <option value="TypeTL">TypeTL</option>
+            <option value="TypeR">TypeR</option>
+            <option value="TypeAⅡ">TypeAⅡ</option>
+            <option value="TypeKN">TypeKN</option>
+            <option value="TypeKTL">TypeKTL</option>
+            <option value="TypeKR">TypeKR</option>
+            <option value="TypeKAⅡ">TypeKAⅡ</option>
+            <option value="LP+TypeN">LP+TypeN</option>
+            <option value="LP+TypeTL">LP+TypeTL</option>
+            <option value="LP+TypeR">LP+TypeR</option>
+            <option value="LP+TypeAⅡ">LP+TypeAⅡ</option>
+            <option value="LP+TypeKN">LP+TypeKN</option>
+            <option value="LP+TypeKTL">LP+TypeKTL</option>
+            <option value="LP+TypeKR">LP+TypeKR</option>
+            <option value="LP+TypeKAⅡ">LP+TypeKAⅡ</option>
+            <option value="LP+TypeK">LP+TypeK</option>
+            <option value="LP+TypeKAⅡ">LP+TypeKAⅡ</option>
+            <option value="SC+TypeN">SC+TypeN</option>
+            <option value="SC+TypeTL">SC+TypeTL</option>
+            <option value="SC+TypeR">SC+TypeR</option>
+            <option value="SC+TypeAⅡ">SC+TypeAⅡ</option>
+            <option value="SC+TypeKN">SC+TypeKN</option>
+            <option value="SC+TypeKTL">SC+TypeKTL</option>
+            <option value="SC+TypeKR">SC+TypeKR</option>
+            <option value="SC+TypeKAⅡ">SC+TypeKAⅡ</option>
+            <option value="LP+SC+TypeN">LP+SC+TypeN</option>
+            <option value="LP+SC+TypeTL">LP+SC+TypeTL</option>
+            <option value="LP+SC+TypeR">LP+SC+TypeR</option>
+            <option value="LP+SC+TypeAⅡ">LP+SC+TypeAⅡ</option>
+            <option value="LP+SC+TypeKN">LP+SC+TypeKN</option>
+            <option value="LP+SC+TypeKTL">LP+SC+TypeKTL</option>
+            <option value="LP+SC+TypeKR">LP+SC+TypeKR</option>
+            <option value="LP+SC+TypeKAⅡ">LP+SC+TypeKAⅡ</option>
+            <option value="SHOT+TypeN">SHOT+TypeN</option>
+            <option value="SHOT+TypeTL">SHOT+TypeTL</option>
+            <option value="SHOT+TypeR">SHOT+TypeR</option>
+            <option value="SHOT+TypeAⅡ">SHOT+TypeAⅡ</option>
+            <option value="SHOT+TypeKN">SHOT+TypeKN</option>
+            <option value="SHOT+TypeKTL">SHOT+TypeKTL</option>
+            <option value="SHOT+TypeKR">SHOT+TypeKR</option>
+            <option value="SHOT+TypeKAⅡ">SHOT+TypeKAⅡ</option>
+            <option value="LP+SHOT+TypeN">LP+SHOT+TypeN</option>
+            <option value="LP+SHOT+TypeTL">LP+SHOT+TypeTL</option>
+            <option value="LP+SHOT+TypeR">LP+SHOT+TypeR</option>
+            <option value="LP+SHOT+TypeAⅡ">LP+SHOT+TypeAⅡ</option>
+            <option value="LP+SHOT+TypeKN">LP+SHOT+TypeKN</option>
+            <option value="LP+SHOT+TypeKTL">LP+SHOT+TypeKTL</option>
+            <option value="LP+SHOT+TypeKR">LP+SHOT+TypeKR</option>
+            <option value="LP+SHOT+TypeKAⅡ">LP+SHOT+TypeKAⅡ</option>
+            <option value="LP+SHOT+SC+TypeN">LP+SHOT+SC+TypeN</option>
+            <option value="LP+SHOT+SC+TypeTL">LP+SHOT+SC+TypeTL</option>
+            <option value="LP+SHOT+SC+TypeR">LP+SHOT+SC+TypeR</option>
+            <option value="LP+SHOT+SC+TypeAⅡ">LP+SHOT+SC+TypeAⅡ</option>
+            <option value="LP+SHOT+SC+TypeKN">LP+SHOT+SC+TypeKN</option>
+            <option value="LP+SHOT+SC+TypeKTL">LP+SHOT+SC+TypeKTL</option>
+            <option value="LP+SHOT+SC+TypeKR">LP+SHOT+SC+TypeKR</option>
+            <option value="LP+SHOT+SC+TypeKAⅡ">LP+SHOT+SC+TypeKAⅡ</option>
+          </select>
+        </td>
+        <td><label>Material</label><input name="Material" required placeholder="เช่น SKD61+SKD11"></td>
+      </tr>
+      <tr>
+        <td><label>Shipping Date</label><input type="date" name="ShippingDate"></td>
+        <td><label>วันที่มาถึง (入荷日)</label><input type="date" name="ArrivalDate" placeholder="DD/MM/YYYY"></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ===== SECTION 3: PARTS LIST ===== -->
+  <div class="section">
+    <h2>🔧 รายการชิ้นงาน (Parts List) — สูงสุด 8 รายการ</h2>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:5%">No.</th>
+          <th style="width:15%">Part No.</th>
+          <th style="width:12%">Part Name</th>
+          <th style="width:15%">Product Code</th>
+          <th style="width:15%">Processing</th>
+          <th style="width:8%">Qty</th>
+          <th style="width:8%">kg/pc</th>
+          <th style="width:12%">Material</th>
+          <th style="width:12%">Size (2D/3D)</th>
+          <th style="width:5%"></th>
+        </tr>
+      </thead>
+      <div id="partsContainer">
+        <!-- Row 1 - always present -->
+        <tr class="part-row">
+          <td>1</td>
+          <td><input name="parts[0][PartNo]" placeholder="MOR2608179"></td>
+          <td><input name="parts[0][PartName]" placeholder="DIE"></td>
+          <td><input name="parts[0][ProductCode]" placeholder="TL-N1----"></td>
+          <td><input name="parts[0][Processing]" placeholder="TypeN"></td>
+          <td><input name="parts[0][Qty]" type="number" step="0.01" placeholder="2"></td>
+          <td><input name="parts[0][kg_pc]" type="number" step="0.001" placeholder="0.3"></td>
+          <td><input name="parts[0][Material]" placeholder="SKD61+SKD11"></td>
+          <td><input name="parts[0][Size]" placeholder="Ø40x113"></td>
+          <td><button type="button" onclick="removeRow(1)" style="background:#e74c3c;padding:4px 8px;">✕</button></td>
+        </tr>
+      </div>
+      <tbody>
+        <tr><td colspan="10" style="text-align:center;padding:10px;">
+          <button type="button" onclick="addRow()" class="secondary" style="padding:6px 16px;font-size:13px;">＋ เพิ่มแถว</button>
+        </td></tr>
+      </tbody>
+    </table>
+    <p class="hint">หมายเหตุ: Size 2D ให้ใส่Øหน้า เช่น Ø40x113 | Size 3D ไม่มีØ เช่น 20x30x40</p>
+  </div>
+
+  <!-- ===== SECTION 4: PRICING ===== -->
+  <div class="section">
+    <h2>💰 การคำนวณราคา (Quotation Pricing)</h2>
+    <table>
+      <tr>
+        <td><label>Validity time</label><input name="Validity" value="30 days"></td>
+        <td><label>Treat within</label><input name="TreatWithin" value="10 days"></td>
+      </tr>
+      <tr>
+        <td><label>Credit Term</label><input name="CreditTerm" value="30 days"></td>
+        <td><label>Exchange Rate (JPY)</label><input name="ExchangeRate" type="number" step="0.01" value="4.1"></td>
+      </tr>
+      <tr>
+        <td><label>สัมประสิทธิ์ TypeN (Coef N)</label><input name="CoefN" type="number" step="0.01" value="1.2"></td>
+        <td><label>สัมประสิทธิ์ TypeR (Coef R)</label><input name="CoefR" type="number" step="0.01" value="1.5"></td>
+      </tr>
+      <tr>
+        <td><label>สัมประสิทธิ์ TypeAⅡ</label><input name="CoefAII" type="number" step="0.01" value="1.5"></td>
+        <td><label>Removal Steel</label><input name="RemovalSteel" type="number" step="0.01" value="0.25"></td>
+      </tr>
+      <tr>
+        <td><label>Removal WC</label><input name="RemovalWC" type="number" step="0.01" value="0.5"></td>
+        <td><label>SP-cleaning</label><input name="SPCleaning" type="number" step="0.01" value="0.25"></td>
+      </tr>
+      <tr>
+        <td><label>Attach Twice</label><input name="AttachTwice" type="number" step="0.01" value="1.8"></td>
+        <td><label>Unit Price (THB/pc หรือ THB/kg)</label><input name="UnitPrice" type="number" step="0.01" value="1080.0"></td>
+      </tr>
+    </table>
+    <p class="hint">💡 Unit Price: ราคาต่อชิ้น (THB/pc) หรือ ราคาต่อกิโล (THB/kg) — ให้ระบุตรงนี้</p>
+  </div>
+
+  <!-- ===== BUTTONS ===== -->
+  <div class="btn-row">
+    <button type="submit">✅ กรอก Excel อัตโนมัติ</button>
+    <button type="button" class="secondary" onclick="resetForm()">Reset</button>
+  </div>
+
+</form>
+
+<script>
+// เพิ่มแถว Parts List
+let rowCount = 1;
+function addRow() {
+  if (rowCount >= 8) {
+    alert('최대 8 รายการครับ');
+    return;
+  }
+  rowCount++;
+  const container = document.getElementById('partsContainer');
+  const newRow = document.createElement('tr');
+  newRow.className = 'part-row';
+  newRow.innerHTML = `
+    <td>${rowCount}</td>
+    <td><input name="parts[${rowCount-1}][PartNo]" placeholder="PartNo"></td>
+    <td><input name="parts[${rowCount-1}][PartName]" placeholder="Name"></td>
+    <td><input name="parts[${rowCount-1}][ProductCode]" placeholder="ProductCode"></td>
+    <td><input name="parts[${rowCount-1}][Processing]" placeholder="Processing"></td>
+    <td><input name="parts[${rowCount-1}][Qty]" type="number" step="0.01" placeholder="Qty"></td>
+    <td><input name="parts[${rowCount-1}][kg_pc]" type="number" step="0.001" placeholder="kg/pc"></td>
+    <td><input name="parts[${rowCount-1}][Material]" placeholder="Material"></td>
+    <td><input name="parts[${rowCount-1}][Size]" placeholder="Size"></td>
+    <td><button type="button" onclick="removeRow(${rowCount})" style="background:#e74c3c;padding:4px 8px;">✕</button></td>
+  `;
+  container.appendChild(newRow);
+}
+
+function removeRow(num) {
+  const container = document.getElementById('partsContainer');
+  const rows = container.querySelectorAll('tr');
+  if (rows.length <= 1) {
+    alert('ต้องมีอย่างน้อย 1 รายการครับ');
+    return;
+  }
+  rows[num-1].remove();
+  // เรียก index ใหม่
+  rowCount--;
+  let i = 1;
+  container.querySelectorAll('tr').forEach(tr => {
+    tr.querySelectorAll('td')[0].textContent = i;
+    const inputs = tr.querySelectorAll('input');
+    // ปรับ name index
+    for (let idx = 0; idx < inputs.length; idx++) {
+      const name = inputs[idx].name;
+      if (name && name.startsWith('parts[')) {
+        inputs[idx].name = name.replace(/parts\[\d+\]/, `parts[${i-1}]`);
+      }
+    }
+    i++;
+  });
+}
+
+function resetForm() {
+  if (confirm('ล้างค่าทั้งหมดไหมครับ?')) {
+    document.getElementById('mainForm').reset();
+    rowCount = 1;
+    const container = document.getElementById('partsContainer');
+    container.innerHTML = '';
+    addRow();  // ให้ row 1 เสมอ
+  }
+}
+</script>
+
+</body>
+</html>
