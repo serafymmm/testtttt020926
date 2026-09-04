@@ -128,141 +128,21 @@
   <button class="nav-btn" id="prevMonth">◀</button>
   <span class="month-label" id="monthLabel">กันยายน 2026</span>
   <button class="nav-btn" id="nextMonth">▶</button>
-  <button class="nav-btn primary" id="todayBtn"><font style="color:#FF0000">📌 วันนี้</button></font>
+  <button class="nav-btn" id="todayBtn" onclick="document.getElementById('todayBtn').onclick()"><font style="color:#FF0000">📌 วันนี้</button></font>
   <span class="spacer"></span>
   <button class="nav-btn primary" id="addBtn" style="background:var(--accent);color:#fff;">➕ เพิ่ม</button>
   <button class="nav-btn" id="exportBtn">💾 CSV</button>
+  <button class="nav-btn" id="excelBtn" style="color:#10b981;">📊 Excel</button>
   <button class="nav-btn" id="resetBtn" style="color:#ef4444;">↺ รีเซ็ต</button>
 </div>
 
 <div class="today-section">
   <div class="today-header">
-    <span class="today-badge"><font style="color:#FF0000">📌 วันนี้ 2 กันยายน 2026</span></font>
+    <span class="today-badge" id="todayBadge"></span>
     <span class="today-count" id="todayCount"></span>
   </div>
-  <div id="todayList">
-    
-    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T151','TOYOTA BOSHOKU FILTRA')">
-      <span class="evt-bar-icon">📦</span>
-      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T151</span><span class="evt-bar-cust">TOYOTA BOSHOKU FILTRA</span></div>
-      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
-      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T151','TOYOTA BOSHOKU FILTRA')" title="ลบ">✕</button>
-    </div>
-    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T215','SIXTY-SIX')">
-      <span class="evt-bar-icon">📦</span>
-      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T215</span><span class="evt-bar-cust">SIXTY-SIX</span></div>
-      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
-      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T215','SIXTY-SIX')" title="ลบ">✕</button>
-    </div>
-    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T273','NICHIDAI ASIA')">
-      <span class="evt-bar-icon">📦</span>
-      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T273</span><span class="evt-bar-cust">NICHIDAI ASIA</span></div>
-      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
-      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T273','NICHIDAI ASIA')" title="ลบ">✕</button>
-    </div>
-    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T278','ENSHU AUTO')">
-      <span class="evt-bar-icon">📦</span>
-      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T278</span><span class="evt-bar-cust">ENSHU AUTO</span></div>
-      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
-      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T278','ENSHU AUTO')" title="ลบ">✕</button>
-    </div>
-    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T327','PSM')">
-      <span class="evt-bar-icon">📦</span>
-      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T327</span><span class="evt-bar-cust">PSM</span></div>
-      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
-      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T327','PSM')" title="ลบ">✕</button>
-    </div>
-    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T336','ASIA YAMASHITA')">
-      <span class="evt-bar-icon">📦</span>
-      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T336</span><span class="evt-bar-cust">ASIA YAMASHITA</span></div>
-      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
-      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T336','ASIA YAMASHITA')" title="ลบ">✕</button>
-    </div>
-    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T337','ASIA YAMASHITA')">
-      <span class="evt-bar-icon">📦</span>
-      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T337</span><span class="evt-bar-cust">ASIA YAMASHITA</span></div>
-      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
-      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T337','ASIA YAMASHITA')" title="ลบ">✕</button>
-    </div>
-    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T347','ASIA YAMASHITA')">
-      <span class="evt-bar-icon">📦</span>
-      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T347</span><span class="evt-bar-cust">ASIA YAMASHITA</span></div>
-      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
-      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T347','ASIA YAMASHITA')" title="ลบ">✕</button>
-    </div>
-    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T348','ASIA YAMASHITA')">
-      <span class="evt-bar-icon">📦</span>
-      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T348</span><span class="evt-bar-cust">ASIA YAMASHITA</span></div>
-      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
-      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T348','ASIA YAMASHITA')" title="ลบ">✕</button>
-    </div>
-    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T349','ASIA YAMASHITA')">
-      <span class="evt-bar-icon">📦</span>
-      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T349</span><span class="evt-bar-cust">ASIA YAMASHITA</span></div>
-      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
-      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T349','ASIA YAMASHITA')" title="ลบ">✕</button>
-    </div>
-    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T350','ASIA YAMASHITA')">
-      <span class="evt-bar-icon">📦</span>
-      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T350</span><span class="evt-bar-cust">ASIA YAMASHITA</span></div>
-      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
-      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T350','ASIA YAMASHITA')" title="ลบ">✕</button>
-    </div>
-    <div class="evt-bar ship bar-ship" onclick="event.stopPropagation();openEdit('Q2608T351','SEVEN SEAS')">
-      <span class="evt-bar-icon">📦</span>
-      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T351</span><span class="evt-bar-cust">SEVEN SEAS</span></div>
-      <div class="evt-bar-right"><span class="evt-bar-label">出荷</span><span class="evt-bar-date">2026-09-02</span></div>
-      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T351','SEVEN SEAS')" title="ลบ">✕</button>
-    </div>
-    <div class="evt-bar ndk bar-ndk" onclick="event.stopPropagation();openEdit('Q2608T249','TAKEBE')">
-      <span class="evt-bar-icon">📦</span>
-      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T249</span><span class="evt-bar-cust">TAKEBE</span></div>
-      <div class="evt-bar-right"><span class="evt-bar-label">NDK出荷</span><span class="evt-bar-date">2026-09-02</span></div>
-      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T249','TAKEBE')" title="ลบ">✕</button>
-    </div>
-    <div class="evt-bar ndk bar-ndk" onclick="event.stopPropagation();openEdit('Q2608T312','ENSHU AUTO')">
-      <span class="evt-bar-icon">📥</span>
-      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T312</span><span class="evt-bar-cust">ENSHU AUTO</span></div>
-      <div class="evt-bar-right"><span class="evt-bar-label">NDK入荷</span><span class="evt-bar-date">2026-09-02</span></div>
-      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T312','ENSHU AUTO')" title="ลบ">✕</button>
-    </div>
-    <div class="evt-bar ndk bar-ndk" onclick="event.stopPropagation();openEdit('Q2608T321','FUJILLOY')">
-      <span class="evt-bar-icon">📥</span>
-      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T321</span><span class="evt-bar-cust">FUJILLOY</span></div>
-      <div class="evt-bar-right"><span class="evt-bar-label">NDK入荷</span><span class="evt-bar-date">2026-09-02</span></div>
-      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T321','FUJILLOY')" title="ลบ">✕</button>
-    </div>
-    <div class="evt-bar ndk bar-ndk" onclick="event.stopPropagation();openEdit('Q2608T322','FUJILLOY')">
-      <span class="evt-bar-icon">📥</span>
-      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T322</span><span class="evt-bar-cust">FUJILLOY</span></div>
-      <div class="evt-bar-right"><span class="evt-bar-label">NDK入荷</span><span class="evt-bar-date">2026-09-02</span></div>
-      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T322','FUJILLOY')" title="ลบ">✕</button>
-    </div>
-    <div class="evt-bar ndk bar-ndk" onclick="event.stopPropagation();openEdit('Q2608T342','SIXTY-SIX')">
-      <span class="evt-bar-icon">📥</span>
-      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T342</span><span class="evt-bar-cust">SIXTY-SIX</span></div>
-      <div class="evt-bar-right"><span class="evt-bar-label">NDK入荷</span><span class="evt-bar-date">2026-09-02</span></div>
-      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T342','SIXTY-SIX')" title="ลบ">✕</button>
-    </div>
-    <div class="evt-bar ndk bar-ndk" onclick="event.stopPropagation();openEdit('Q2608T343','TAIYO MANUFAC')">
-      <span class="evt-bar-icon">📥</span>
-      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T343</span><span class="evt-bar-cust">TAIYO MANUFAC</span></div>
-      <div class="evt-bar-right"><span class="evt-bar-label">NDK入荷</span><span class="evt-bar-date">2026-09-02</span></div>
-      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T343','TAIYO MANUFAC')" title="ลบ">✕</button>
-    </div>
-    <div class="evt-bar wrap bar-wrap" onclick="event.stopPropagation();openEdit('Q2608T354','SATO PRESS')">
-      <span class="evt-bar-icon">📦</span>
-      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T354</span><span class="evt-bar-cust">SATO PRESS</span></div>
-      <div class="evt-bar-right"><span class="evt-bar-label">ﾗｯﾌﾟ出荷</span><span class="evt-bar-date">2026-09-02</span></div>
-      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T354','SATO PRESS')" title="ลบ">✕</button>
-    </div>
-    <div class="evt-bar wrap bar-wrap" onclick="event.stopPropagation();openEdit('Q2608T354','SATO PRESS')">
-      <span class="evt-bar-icon">📥</span>
-      <div class="evt-bar-main"><span class="evt-bar-qno">Q2608T354</span><span class="evt-bar-cust">SATO PRESS</span></div>
-      <div class="evt-bar-right"><span class="evt-bar-label">ﾗｯﾌﾟ入荷</span><span class="evt-bar-date">2026-09-02</span></div>
-      <button class="evt-bar-del" onclick="event.stopPropagation();confirmDel('Q2608T354','SATO PRESS')" title="ลบ">✕</button>
-    </div>
-  </div>
+  <div id="todayList"></div>
+  <div id="debugMsg" style="display:none;color:#FF0000;font-size:0.6rem;margin-top:3px;font-family:monospace;"></div>
 </div>
 
 <div class="cal-sec">
@@ -371,6 +251,7 @@
 <div class="footer">
   จุดแข็ง: เรียนรู้ไว<br>
   จุดอ่อน: ลืมไว
+  <div id="debugMsg" style="display:none; margin-top:4px; font-size:0.55rem; color:#ef4444;"></div>
 </div>
 
 <script>
@@ -378,10 +259,13 @@ const RECORDS = [{"date": "2026-07-21", "qNo": "Q2607T268", "customer": "TOYOTA 
 const MONTHS=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
 const MONTHS_SHORT=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 
-let curYear=2026, curMonth=9;
+let tNow=new Date();
+let curYear=tNow.getFullYear(), curMonth=tNow.getMonth();
 let currentEditId=null, currentCustomer=null;
 
-let records = JSON.parse(localStorage.getItem('tl_cal_v5') || JSON.stringify(RECORDS));
+// เริ่มจากข้อมูลต้นฉบับทุกครั้ง (เหมือนการกดรีเซ็ต) — แก้ปัญหาข้อมูลเสีย/ผิดเพี้ยน
+localStorage.removeItem('tl_cal_v5');
+let records = JSON.parse(JSON.stringify(RECORDS));
 
 function countToday(){
   const t = new Date();
@@ -401,7 +285,38 @@ function initTodayCount(){
 
 function saveAll(){localStorage.setItem('tl_cal_v5', JSON.stringify(records));}
 
-initTodayCount();
+function syncToExcel(){
+  const data = {
+    records: records.filter(r => r && r.qNo)
+  };
+  fetch('http://localhost:8765/save', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  }).then(r => r.json()).then(j => {
+    if(!j.ok) console.warn('Excel sync failed:', j.msg);
+  }).catch(e => console.warn('Excel sync error:', e));
+}
+function initToday(){
+  initTodayCount();
+  document.getElementById('todayBadge').innerHTML =
+    '<font style="color:#FF0000">📌 วันนี้ ' + tNow.getDate() + ' ' + MONTHS[tNow.getMonth()] + ' ' + tNow.getFullYear() + '</font>';
+}
+
+function goToToday(){
+  const t=new Date();
+  curYear=t.getFullYear();
+  curMonth=t.getMonth();
+  try {
+    renderCalendar();
+    buildTodayList();
+    document.getElementById('monthLabel').textContent=MONTHS[curMonth]+' '+curYear;
+  } catch(e) {
+    document.getElementById('monthLabel').textContent = '⚠ ' + e.message;
+    document.getElementById('dayGrid').innerHTML =
+      '<div style="color:#ef4444;padding:6px;">Error: ' + e.message + '</div>';
+  }
+}
 
 function pad(n){return String(n).padStart(2,'0');}
 function makeDate(y,m,d){return y+'-'+pad(m+1)+'-'+pad(d);}
@@ -627,6 +542,7 @@ function saveRec(){
     if(idx>=0) records[idx]=rec; else records.push(rec);
   } else records.push(rec);
   saveAll();
+  syncToExcel();
   closeModal();
   buildTodayList();
   renderCalendar();
@@ -638,6 +554,7 @@ function confirmDel(qNo,customer){
     const idx=records.findIndex(r=>r.qNo===qNo&&r.customer===customer);
     if(idx>=0) records.splice(idx,1);
     saveAll();
+    syncToExcel();
     closeConfirm();
     buildTodayList();
     renderCalendar();
@@ -662,13 +579,23 @@ function exportCSV(){
   URL.revokeObjectURL(link.href);
 }
 
+function exportJSON(){
+  const data = records.filter(r => r && r.qNo);
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json;charset=utf-8;'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'TL_Excel_Input_' + new Date().toISOString().split('T')[0] + '.json';
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
 function resetAll(){
-  if(confirm('🚫 ล้างการแก้ไขทั้งหมด และกลับไปใช้ข้อมูลต้นฉบับจาก Excel?')){
-    localStorage.removeItem('tl_cal_v5');
-    records=JSON.parse(JSON.stringify(RECORDS));
-    buildTodayList();
-    renderCalendar();
-  }
+  localStorage.removeItem('tl_cal_v5');
+  records=JSON.parse(JSON.stringify(RECORDS));
+  initToday();
+  goToToday();
+  // พรุ่งนี้ถ้ามีเซิร์ฟเวอร์ ให้เพิ่ม syncToExcel() ที่นี่
+  // syncToExcel(); // ปิดไว้ก่อน เพราะจะทำให้หน้าแรกโหลดไม่ได้ถ้าไม่มีเซิร์ฟเวอร์
 }
 
 document.getElementById('prevMonth').onclick=function(){curMonth--;if(curMonth<0){curMonth=11;curYear--;}renderCalendar();};
@@ -676,12 +603,25 @@ document.getElementById('nextMonth').onclick=function(){curMonth++;if(curMonth>1
 document.getElementById('todayBtn').onclick=function(){const t=new Date();curYear=t.getFullYear();curMonth=t.getMonth();renderCalendar();};
 document.getElementById('addBtn').onclick=openAdd;
 document.getElementById('exportBtn').onclick=exportCSV;
+document.getElementById('excelBtn').onclick=exportJSON;
 document.getElementById('resetBtn').onclick=resetAll;
 document.getElementById('modalBackdrop').onclick=function(e){if(e.target.id==='modalBackdrop')closeModal();};
 document.getElementById('confirmBackdrop').onclick=function(e){if(e.target.id==='confirmBackdrop')closeConfirm();};
 
-buildTodayList();
-renderCalendar();
+// หน้าโหลดเสร็จแล้ว — ให้เรียก resetAll() แทน goToToday()
+// (resetAll จะเคลียร์ localStorage, เริ่มข้อมูลใหม่, sync Excel, แสดงวันปัจจุบัน + รายการวันนี้)
+// หน้าโหลดเสร็จแล้ว — เรียก resetAll() โดยตรง พร้อม debug
+resetAll();
+var dm = document.getElementById('debugMsg');
+if(dm) {
+  dm.textContent = 'records=' + records.length +
+    ' | year=' + curYear +
+    ' | month=' + curMonth +
+    ' | badge=' + (document.getElementById('todayBadge').innerHTML ? 'OK' : 'EMPTY') +
+    ' | list=' + (document.getElementById('todayList').children.length > 0 ? 'HAS_CHILDREN' : 'NO_CHILDREN') +
+    ' | monthLabel=' + document.getElementById('monthLabel').textContent;
+  dm.style.display = 'block';
+}
 </script>
 </body>
 </html>
